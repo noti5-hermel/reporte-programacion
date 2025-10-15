@@ -54,17 +54,23 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
       setSortColumn(normalizedColumn);
       setSortDirection("asc");
     }
+    setCurrentPage(1);
   };
 
   // 🔹 Ordenar los datos
   const sortedData = useMemo(() => {
     if (!sortColumn) return data;
+
+    const key = sortColumn;
+
     return [...data].sort((a, b) => {
-      const valA = a[sortColumn] ?? "";
-      const valB = b[sortColumn] ?? "";
+      const valA = a[key] ?? "";
+      const valB = b[key] ?? "";
+
       if (typeof valA === "number" && typeof valB === "number") {
         return sortDirection === "asc" ? valA - valB : valB - valA;
       }
+
       return sortDirection === "asc"
         ? String(valA).localeCompare(String(valB))
         : String(valB).localeCompare(String(valA));
@@ -79,16 +85,24 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
   );
 
   if (loading) {
-    return <p className="text-center text-gray-500">Cargando datos...</p>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500 text-lg">Cargando datos...</p>
+      </div>
+    );
   }
 
   if (data.length === 0) {
-    return <p className="text-center text-gray-400">No hay datos disponibles</p>;
+    return (
+      <div className="flex justify-center items-center h-64 bg-gray-50 rounded-lg">
+        <p className="text-gray-500 text-lg">No hay datos para mostrar</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto border rounded-lg shadow-sm">
+    <div className="bg-white p-6 rounded-xl shadow-lg space-y-6">
+      <div className="overflow-x-auto border rounded-xl">
         <table className="min-w-full border-collapse">
           <TableHeader
             columns={columns}
@@ -107,16 +121,19 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
       {/* 🔹 Controles de paginación */}
       <div className="flex flex-wrap justify-between items-center gap-4 text-sm text-gray-700">
         <div className="flex items-center gap-2">
-          <span>Filas por página:</span>
+          <label htmlFor="rows-per-page" className="font-medium">
+            Filas por página:
+          </label>
           <select
+            id="rows-per-page"
             value={rowsPerPage}
             onChange={(e) => {
               setRowsPerPage(Number(e.target.value));
-              setCurrentPage(1);
+              setCurrentPage(1); // Reset to first page
             }}
-            className="border rounded-md p-1"
+            className="border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 transition"
           >
-            {[5, 10, 20, 50].map((n) => (
+            {[5, 10, 20, 50, 100].map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
@@ -124,15 +141,15 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
           </select>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            className="px-2 py-1 border rounded disabled:opacity-40"
+            className="px-3 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            ◀
+            Anterior
           </button>
-          <span>
+          <span className="font-medium">
             Página {currentPage} de {totalPages || 1}
           </span>
           <button
@@ -140,9 +157,9 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
               setCurrentPage((p) => Math.min(p + 1, totalPages || 1))
             }
             disabled={currentPage === totalPages || totalPages === 0}
-            className="px-2 py-1 border rounded disabled:opacity-40"
+            className="px-3 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            ▶
+            Siguiente
           </button>
         </div>
       </div>

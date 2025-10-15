@@ -26,15 +26,15 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             <th
               key={col}
               onClick={() => onSort && onSort(col)}
-              className="px-3 py-2 text-left text-sm font-semibold border-b cursor-pointer select-none hover:bg-gray-50"
+              className="px-4 py-3 text-left text-sm font-semibold border-b-2 border-gray-200 cursor-pointer select-none hover:bg-gray-200 transition-colors"
             >
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 {col}
                 {isSorted &&
                   (sortDirection === "asc" ? (
-                    <ArrowUp className="w-3 h-3" />
+                    <ArrowUp className="w-4 h-4" />
                   ) : (
-                    <ArrowDown className="w-3 h-3" />
+                    <ArrowDown className="w-4 h-4" />
                   ))}
               </div>
             </th>
