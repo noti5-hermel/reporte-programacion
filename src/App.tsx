@@ -1,22 +1,29 @@
-import { BrowserRouter as Router } from "react-router-dom";
+import { useState } from "react";
 import AppRoutes from "./routes/AppRoutes";
 import Sidebar from "./components/Sidebar/Sidebar";
 
 function App() {
-  return (
-    <Router>
-      <div className="flex h-screen bg-gray-50">
-        {/* Sidebar lateral fijo */}
-        <Sidebar />
+  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-        {/* Contenedor de las páginas */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+  return (
+    <div className="flex h-screen bg-gallery font-sans">
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        toggleSidebar={() => setSidebarCollapsed(!isSidebarCollapsed)}
+      />
+
+      <main
+        className={`flex-1 flex flex-col p-4 md:p-8 overflow-y-auto transition-all duration-300 ${
+          isSidebarCollapsed ? "ml-20" : "ml-64"
+        }`}
+      >
+        <div className="flex-grow flex items-center justify-center">
+          <div className="w-full max-w-7xl mx-auto">
             <AppRoutes />
           </div>
-        </main>
-      </div>
-    </Router>
+        </div>
+      </main>
+    </div>
   );
 }
 
