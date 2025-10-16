@@ -1,27 +1,53 @@
-import Card from "../components/Card/Card";
-import Table from "../components/Table/Table";
+import { useState, useMemo } from "react";
+import { DataTable } from "../components/Table";
+import { SearchBar } from "../components/SearchBar/SearchBar";
 
 const mockResumen = [
-  ["P001", "Producto A", "Tipo1", 20, 400, 0.05, 4],
-];
-
-const headers = [
-  "Código",
-  "Descripción",
-  "Tipo",
-  "Suma Total Horas",
-  "Suma Cantidad",
-  "Promedio Tiempo Producto",
-  "Número de Personas",
+  // (Assuming mockResumen is the same as before)
+  {
+    codigo: "P001",
+    descripcion: "Producto A",
+    tipo: "Tipo1",
+    sumaTotalHoras: 20,
+    sumCantidad: 400,
+    promTiempoProducto: 0.05,
+    numeroPersonas: 4,
+  },
+  {
+    codigo: "P002",
+    descripcion: "Producto B",
+    tipo: "Tipo2",
+    sumaTotalHoras: 30,
+    sumCantidad: 600,
+    promTiempoProducto: 0.05,
+    numeroPersonas: 5,
+  },
+  // ... more data
 ];
 
 export default function Resumen() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredData = useMemo(() => {
+    if (!searchQuery) {
+      return mockResumen;
+    }
+    return mockResumen.filter((item) =>
+      Object.values(item).some((value) =>
+        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [searchQuery]);
+
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-xl font-bold text-venice-blue">Resumen por Producto</h1>
-      <Card>
-        <Table headers={headers} data={mockResumen} />
-      </Card>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl font-bold">Resumen por Producto</h1>
+      </div>
+      <div className="flex items-center gap-4">
+        <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      </div>
+      <DataTable type="resumen" data={filteredData} />
     </div>
   );
 }

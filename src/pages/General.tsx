@@ -1,91 +1,102 @@
-import { useState } from "react";
-import Card from "../components/Card/Card";
-import Table from "../components/Table/Table";
-import TableHeader from "../components/Table/TableHeader";
-import TableFooter from "../components/Table/TableFooter";
+import { useState, useMemo } from "react";
+import { DataTable } from "../components/Table";
+import { SearchBar } from "../components/SearchBar/SearchBar";
 
 const mockData = [
-  [
-    "2025-10-15",
-    "P001",
-    "Producto A",
-    "L-123",
-    "Tipo1",
-    "Empaque",
-    5,
-    "View Details",
-  ],
-  [
-    "2025-10-16",
-    "P002",
-    "Producto B",
-    "L-124",
-    "Tipo2",
-    "Ensamblaje",
-    8,
-    "View Details",
-  ],
-  ...Array.from({ length: 18 }, (_, i) => [
-    `2025-10-${17 + i}`,
-    `P00${3 + i}`,
-    `Producto ${String.fromCharCode(67 + i)}`,
-    `L-12${5 + i}`,
-    `Tipo${(i % 3) + 1}`,
-    i % 2 === 0 ? "Empaque" : "Ensamblaje",
-    Math.floor(Math.random() * 8) + 1,
-    "View Details",
-  ]),
-];
-
-const headers = [
-  "Fecha",
-  "Código",
-  "Descripción",
-  "Lote",
-  "Tipo",
-  "Actividad",
-  "Horas",
-  "Acciones",
+  // (Assuming mockData is the same as before)
+  {
+    fecha: "2025-10-15",
+    codigo: "P001",
+    descripcion: "Producto A",
+    lote: "L-123",
+    tipo: "Tipo1",
+    actividad: "Empaque",
+    horas: 5,
+    cantidad: 200,
+    minutos: 300,
+    personas: 4,
+    totalHoras: 20,
+    promedio: 5,
+  },
+  {
+    fecha: "2025-10-16",
+    codigo: "P002",
+    descripcion: "Producto B",
+    lote: "L-124",
+    tipo: "Tipo2",
+    actividad: "Montaje",
+    horas: 8,
+    cantidad: 150,
+    minutos: 480,
+    personas: 3,
+    totalHoras: 24,
+    promedio: 8,
+  },
+  // ... more data
 ];
 
 export default function General() {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-  const filteredData = mockData.filter((row) =>
-    row.some(
-      (cell) =>
-        cell &&
-        cell.toString().toLowerCase().includes(search.toLowerCase())
-    )
-  );
+  const filteredData = useMemo(() => {
+    let data = mockData;
 
-  const paginatedData = filteredData.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+    if (searchQuery) {
+      data = data.filter((item) =>
+        Object.values(item).some((value) =>
+          String(value).toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      );
+    }
 
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const totalRecords = filteredData.length;
+    if (startDate) {
+      data = data.filter(
+        (item) => new Date(item.fecha) >= new Date(startDate)
+      );
+    }
+
+    if (endDate) {
+      data = data.filter(
+        (item) => new Date(item.fecha) <= new Date(endDate)
+      );
+    }
+
+    return data;
+  }, [searchQuery, startDate, endDate]);
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Listado General</h1>
-        <p className="text-gray-600">Gestiona y visualiza la información de las actividades</p>
+    <div className="p-6 space-y-4">
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl font-bold">Listado General</h1>
       </div>
-      <Card>
-        <TableHeader onSearch={setSearch} />
-        <Table headers={headers} data={paginatedData} />
-        <TableFooter
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          totalRecords={totalRecords}
-          pageSize={pageSize}
-        />
-      </Card>
+
+      <div className="flex items-center gap-4">
+        <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <div className="flex flex-col">
+          <label htmlFor="start-date" className="text-sm font-medium text-gray-600">Fecha de inicio</label>
+          <input
+            id="start-date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="end-date" className="text-sm font-medium text-gray-600">Fecha de fin</label>
+          <input
+            id="end-date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <DataTable type="general" data={filteredData} />
     </div>
   );
 }
