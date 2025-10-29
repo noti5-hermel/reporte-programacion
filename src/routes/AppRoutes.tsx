@@ -13,7 +13,7 @@ import PrivateRoute from "./PrivateRoute";
 import { useAuth } from "../contexts/AuthContext";
 
 const AppLayout = () => (
-  <div className="flex">
+  <div className="flex min-h-screen">
     <Sidebar />
     <main className="flex-grow p-4">
       <Outlet />
@@ -29,7 +29,7 @@ export const AppRoutes = () => {
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated ? <Navigate to="/general" /> : <LoginPage />}
+          element={isAuthenticated ? <Navigate to="/general" replace /> : <LoginPage />}
         />
         <Route element={<PrivateRoute />}>
           <Route element={<AppLayout />}>

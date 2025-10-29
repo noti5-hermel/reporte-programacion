@@ -1,0 +1,3 @@
+- [x] Actualizar AuthContext para incluir verificación de roles
+- [x] Modificar PrivateRoute para verificar roles 'admin' o 'accounting'
+- [x] Redirigir a login si no tiene rol permitido

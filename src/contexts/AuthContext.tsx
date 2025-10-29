@@ -5,10 +5,12 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
+import { API_BASE_URL } from "../api/config";
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any;
+  hasRole: (roles: string[]) => boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -31,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [token]);
 
   const login = async (username, password) => {
-    const response = await fetch("http://192.168.1.155:8001/api/v1/auth/login", {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -60,9 +62,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  const hasRole = (roles: string[]) => {
+    if (!user || !user.role) return false;
+    return roles.includes(user.role);
+  };
+
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: !!token, user, login, logout }}
+      value={{ isAuthenticated: !!token, user, hasRole, login, logout }}
     >
       {children}
     </AuthContext.Provider>

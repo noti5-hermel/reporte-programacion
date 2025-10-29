@@ -1,50 +1,61 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-
-const mockData = [
-  // (Assuming mockData is the same as before)
-  {
-    fecha: "2025-10-15",
-    codigo: "P001",
-    descripcion: "Producto A",
-    lote: "L-123",
-    tipo: "Tipo1",
-    actividad: "Empaque",
-    horas: 5,
-    cantidad: 200,
-    minutos: 300,
-    personas: 4,
-    totalHoras: 20,
-    promedio: 5,
-  },
-  {
-    fecha: "2025-10-16",
-    codigo: "P002",
-    descripcion: "Producto B",
-    lote: "L-124",
-    tipo: "Tipo2",
-    actividad: "Montaje",
-    horas: 8,
-    cantidad: 150,
-    minutos: 480,
-    personas: 3,
-    totalHoras: 24,
-    promedio: 8,
-  },
-  // ... more data
-];
+import { useAuth } from "../contexts/AuthContext";
+import { API_BASE_URL } from "../api/config";
 
 export default function General() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/api/v1/reports/task-performance`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const transformed = Array.isArray(result)
+            ? result.map((item: any) => ({
+                ...item,
+                horas: item.horas ?? item.horas_unitarias ?? null,
+                cantidad: item.cantidad ?? item.cantidad_real ?? null,
+                // API change: prefer `minutes`; keep fallbacks for compatibility
+                minutos: item.minutes ?? item.minutos ?? item.minutos_estimados ?? null,
+                totalHoras: item.totalHoras ?? item.total_horas ?? null,
+                // API change: prefer `proporcion`; keep fallbacks
+                promedio: item.proporcion ?? item.ratio_horas ?? item.promedio ?? null,
+              }))
+            : result;
+          setData(transformed);
+        } else {
+          setError("Failed to fetch data");
+        }
+      } catch (err) {
+        setError("Error fetching data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredData = useMemo(() => {
-    let data = mockData;
+    let filtered = data;
 
     if (searchQuery) {
-      data = data.filter((item) =>
+      filtered = filtered.filter((item) =>
         Object.values(item).some((value) =>
           String(value).toLowerCase().includes(searchQuery.toLowerCase())
         )
@@ -52,19 +63,19 @@ export default function General() {
     }
 
     if (startDate) {
-      data = data.filter(
+      filtered = filtered.filter(
         (item) => new Date(item.fecha) >= new Date(startDate)
       );
     }
 
     if (endDate) {
-      data = data.filter(
+      filtered = filtered.filter(
         (item) => new Date(item.fecha) <= new Date(endDate)
       );
     }
 
-    return data;
-  }, [searchQuery, startDate, endDate]);
+    return filtered;
+  }, [data, searchQuery, startDate, endDate]);
 
   return (
     <div className="p-6 space-y-4">
@@ -96,7 +107,13 @@ export default function General() {
         </div>
       </div>
 
-      <DataTable type="general" data={filteredData} />
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+        <DataTable type="general" data={filteredData} />
+      )}
     </div>
   );
 }

@@ -3,9 +3,17 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const PrivateRoute: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, hasRole } = useAuth();
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
+  if (!isAuthenticated) {
+    return <Navigate to="/" />;
+  }
+
+  if (!hasRole(['admin', 'accounting'])) {
+    return <Navigate to="/" />;
+  }
+
+  return <Outlet />;
 };
 
 export default PrivateRoute;
