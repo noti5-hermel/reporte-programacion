@@ -1,9 +1,9 @@
-import React, {
+import {
   createContext,
   useState,
   useContext,
-  ReactNode,
   useEffect,
+  type ReactNode,
 } from "react";
 import { API_BASE_URL } from "../api/config";
 
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [token]);
 
-  const login = async (username, password) => {
+  const login = async (username: string, password: string) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
       method: "POST",
       headers: {

@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-import { useAuth } from "../contexts/AuthContext";
 import { API_BASE_URL } from "../api/config";
 
 export default function General() {
@@ -11,7 +10,6 @@ export default function General() {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
