@@ -1,6 +1,118 @@
-# React + TypeScript + Vite
+# Reportería de Programación
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de reportería desarrollado con React + TypeScript + Vite para visualización y análisis de rendimiento de tareas.
+
+## 🚀 Inicio Rápido
+
+### Desarrollo Local
+
+```bash
+npm install
+npm run dev
+```
+
+La aplicación estará disponible en `http://localhost:3000`
+
+### Construcción con Docker
+
+#### Opción 1: Docker Compose (Recomendado)
+
+```bash
+# Construir y levantar el contenedor
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Detener el contenedor
+docker-compose down
+```
+
+La aplicación estará disponible en `http://localhost:85`
+
+#### Opción 2: Docker CLI
+
+```bash
+# Construir la imagen
+docker build -t reporteria-frontend .
+
+# Ejecutar el contenedor
+docker run -d -p 85:80 --name reporteria-frontend reporteria-frontend
+```
+
+## 📋 Scripts Disponibles
+
+- `npm run dev` - Inicia el servidor de desarrollo
+- `npm run build` - Construye la aplicación para producción
+- `npm run lint` - Ejecuta el linter
+- `npm run preview` - Previsualiza la construcción de producción
+
+## ⚙️ Configuración del API
+
+Para configurar la URL base del API, crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+
+```
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+Si no especificas esta variable, por defecto se usará `http://localhost:8000`.
+
+### Ejemplos de configuración:
+
+**Desarrollo local:**
+```
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+**Servidor de desarrollo:**
+```
+VITE_API_BASE_URL=http://192.168.1.100:8000
+```
+
+**Producción:**
+```
+VITE_API_BASE_URL=https://api.tudominio.com
+```
+
+**Importante:** 
+- Después de modificar el archivo `.env`, debes reiniciar el servidor de desarrollo para que los cambios surtan efecto
+- Para Docker, las variables de entorno deben configurarse antes de construir la imagen (`docker build`)
+
+## 🐳 Información sobre Docker
+
+### Estructura de archivos Docker
+
+- **Dockerfile**: Construcción multi-etapa optimizada (Node 20 + Nginx)
+- **docker-compose.yml**: Configuración del servicio con redes y health checks
+- **nginx.conf**: Configuración de Nginx para SPA con optimizaciones
+- **.dockerignore**: Excluye archivos innecesarios del contexto Docker
+
+### Características
+
+- ✅ Multi-stage build para imagen optimizada
+- ✅ Nginx para servir archivos estáticos
+- ✅ Soporte para React Router (SPA)
+- ✅ Compresión Gzip habilitada
+- ✅ Caché de assets estáticos
+- ✅ Health checks configurados
+- ✅ Headers de seguridad
+
+### Variables de entorno en Docker
+
+Para usar una URL de API diferente en el contenedor Docker:
+
+1. Edita el archivo `.env` con tu URL:
+   ```
+   VITE_API_BASE_URL=https://api.tudominio.com
+   ```
+
+2. Reconstruye la imagen:
+   ```bash
+   docker-compose build
+   docker-compose up -d
+   ```
+
+## 🔧 Información Técnica
 
 Currently, two official plugins are available:
 
