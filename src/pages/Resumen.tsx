@@ -1,43 +1,63 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-
-const mockResumen = [
-  // (Assuming mockResumen is the same as before)
-  {
-    codigo: "P001",
-    descripcion: "Producto A",
-    tipo: "Tipo1",
-    sumaTotalHoras: 20,
-    sumCantidad: 400,
-    promTiempoProducto: 0.05,
-    numeroPersonas: 4,
-  },
-  {
-    codigo: "P002",
-    descripcion: "Producto B",
-    tipo: "Tipo2",
-    sumaTotalHoras: 30,
-    sumCantidad: 600,
-    promTiempoProducto: 0.05,
-    numeroPersonas: 5,
-  },
-  // ... more data
-];
+import { API_BASE_URL } from "../api/config";
 
 export default function Resumen() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/api/v1/reports/task-performance-group`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Transform the API data to match the expected format
+          const transformed = Array.isArray(result)
+            ? result.map((item: any) => ({
+                codigo: item.code,
+                descripcion: item.description,
+                tipo: item.type,
+                sumaTotalHoras: item.sum_hours,
+                sumCantidad: item.sum_quantity,
+                promTiempoProducto: item.avg_time_per_product,
+                numeroPersonas: item.people,
+                totalTiempoReal: item.final_metric,
+              }))
+            : [];
+          setData(transformed);
+        } else {
+          setError("Failed to fetch data");
+        }
+      } catch (err) {
+        setError("Error fetching data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredData = useMemo(() => {
     if (!searchQuery) {
-      return mockResumen;
+      return data;
     }
-    return mockResumen.filter((item) =>
+    return data.filter((item) =>
       Object.values(item).some((value) =>
         String(value).toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
-  }, [searchQuery]);
+  }, [data, searchQuery]);
 
   return (
     <div className="p-6 space-y-4">
@@ -47,7 +67,14 @@ export default function Resumen() {
       <div className="flex items-center gap-4">
         <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       </div>
-      <DataTable type="resumen" data={filteredData} />
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+        <DataTable type="resumen" data={filteredData} />
+      )}
     </div>
   );
 }

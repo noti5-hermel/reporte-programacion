@@ -35,6 +35,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
       <td className="px-3 py-2 border-b text-right">{row.sumCantidad}</td>
       <td className="px-3 py-2 border-b text-right">{row.promTiempoProducto}</td>
       <td className="px-3 py-2 border-b text-right">{row.numeroPersonas}</td>
+      <td className="px-3 py-2 border-b text-right">{row.totalTiempoReal}</td>
     </tr>
   );
 };

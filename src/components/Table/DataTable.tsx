@@ -43,6 +43,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
           "Suma Cantidad",
           "Prom. Tiempo Producto",
           "N° Personas",
+          "Total Tiempo Real",
         ];
 
   // 🔹 Función para manejar el ordenamiento
