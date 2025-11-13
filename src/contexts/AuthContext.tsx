@@ -19,9 +19,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any>(null);
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem("token")
-  );
+  const [token, setToken] = useState<string | null>(() => {
+    const storedToken = localStorage.getItem("token");
+    const lastActivity = localStorage.getItem("last_activity");
+    const inactivityLimit = 60 * 60 * 1000; // 1 hour in milliseconds
+    if (storedToken && lastActivity && Date.now() - parseInt(lastActivity) < inactivityLimit) {
+      return storedToken;
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("last_activity");
+      return null;
+    }
+  });
+
+  const resetActivity = () => {
+    localStorage.setItem("last_activity", Date.now().toString());
+  };
 
   useEffect(() => {
     if (token) {
@@ -29,6 +43,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
+      resetActivity();
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+      const resetTimer = () => resetActivity();
+
+      events.forEach(event => window.addEventListener(event, resetTimer));
+
+      const checkInactivity = () => {
+        const lastActivity = localStorage.getItem("last_activity");
+        const inactivityLimit = 60 * 60 * 1000; // 1 hour
+        if (lastActivity && Date.now() - parseInt(lastActivity) > inactivityLimit) {
+          logout();
+        }
+      };
+
+      const interval = setInterval(checkInactivity, 60000); // Check every minute
+
+      return () => {
+        events.forEach(event => window.removeEventListener(event, resetTimer));
+        clearInterval(interval);
+      };
     }
   }, [token]);
 
@@ -58,6 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("last_activity");
     setToken(null);
     setUser(null);
   };
