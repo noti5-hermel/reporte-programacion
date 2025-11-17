@@ -40,7 +40,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
           "Descripción",
           "Tipo",
           "Suma Total Horas",
-          "Suma Cantidad",
+          "Cantidad producida",
           "Prom. Tiempo Producto",
           "N° Personas",
           "Total Tiempo Real",

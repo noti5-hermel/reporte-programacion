@@ -8,12 +8,25 @@ export default function Resumen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/api/v1/reports/task-performance-group`, {
+        let url = `${API_BASE_URL}/api/v1/reports/task-performance-group`;
+        const params = new URLSearchParams();
+        if (selectedYear !== null) {
+          params.append('year', selectedYear.toString());
+        }
+        if (selectedMonth !== null) {
+          params.append('month', selectedMonth.toString());
+        }
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+        const response = await fetch(url, {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
@@ -46,7 +59,7 @@ export default function Resumen() {
     };
 
     fetchData();
-  }, []);
+  }, [selectedYear, selectedMonth]);
 
   const filteredData = useMemo(() => {
     if (!searchQuery) {
@@ -59,13 +72,52 @@ export default function Resumen() {
     );
   }, [data, searchQuery]);
 
+  const handleClearFilters = () => {
+    setSelectedYear(null);
+    setSelectedMonth(null);
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold">Resumen por Producto</h1>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <div className="flex flex-col">
+          <label htmlFor="year-select" className="text-sm font-medium text-gray-600">Año</label>
+          <select
+            id="year-select"
+            value={selectedYear || ""}
+            onChange={(e) => setSelectedYear(e.target.value ? parseInt(e.target.value) : null)}
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todos</option>
+            {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="month-select" className="text-sm font-medium text-gray-600">Mes</label>
+          <select
+            id="month-select"
+            value={selectedMonth || ""}
+            onChange={(e) => setSelectedMonth(e.target.value ? parseInt(e.target.value) : null)}
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todos</option>
+            {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((name, index) => (
+              <option key={index + 1} value={index + 1}>{name}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={handleClearFilters}
+          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        >
+          Limpiar Filtros
+        </button>
       </div>
 
       {loading ? (

@@ -1,3 +1,8 @@
 - [x] Actualizar AuthContext para incluir verificación de roles
 - [x] Modificar PrivateRoute para verificar roles 'admin' o 'accounting'
 - [x] Redirigir a login si no tiene rol permitido
+- [x] Add state for selectedYear and selectedMonth in Resumen.tsx, defaulting to current year and month
+- [x] Add UI elements: year select dropdown (2020-2030), month select dropdown (1-12), and "Clear Filters" button
+- [x] Modify fetchData function to include query params ?year=...&month=... if selectedYear and selectedMonth are set
+- [x] Update useEffect to depend on selectedYear and selectedMonth for refetching
+- [x] Implement clear filters functionality to set year and month to null
