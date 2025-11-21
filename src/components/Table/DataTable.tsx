@@ -17,7 +17,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
   const columns =
     type === "general"
