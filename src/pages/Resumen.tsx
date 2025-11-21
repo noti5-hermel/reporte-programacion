@@ -83,6 +83,7 @@ export default function Resumen() {
       'Código': item.codigo,
       'Descripción': item.descripcion,
       'Tipo': item.tipo,
+      'Número de Personas': item.numeroPersonas,
       'Total Tiempo Real': item.totalTiempoReal,
     }));
 
