@@ -1,19 +1,11 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Outlet,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import General from "../pages/General";
 import Resumen from "../pages/Resumen";
-import LoginPage from "../pages/Login/LoginPage";
-import PrivateRoute from "./PrivateRoute";
-import { useAuth } from "../contexts/AuthContext";
+import Comparacion from "../pages/Comparacion";
 
 const AppLayout = () => (
-  <div className="flex min-h-screen">
+  <div className="flex">
     <Sidebar />
     <main className="flex-grow p-4">
       <Outlet />
@@ -22,20 +14,13 @@ const AppLayout = () => (
 );
 
 export const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Router>
       <Routes>
-        <Route
-          path="/"
-          element={isAuthenticated ? <Navigate to="/general" replace /> : <LoginPage />}
-        />
-        <Route element={<PrivateRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/general" element={<General />} />
-            <Route path="/resumen" element={<Resumen />} />
-          </Route>
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<General />} />
+          <Route path="resumen" element={<Resumen />} />
+          <Route path="comparacion" element={<Comparacion />} />
         </Route>
       </Routes>
     </Router>
