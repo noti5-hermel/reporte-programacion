@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { API_BASE_URL } from "../api/config";
+import * as XLSX from "xlsx";
 
 export default function Resumen() {
   const [data, setData] = useState<any[]>([]);
@@ -77,10 +78,30 @@ export default function Resumen() {
     setSelectedMonth(null);
   };
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(item => ({
+      'Código': item.codigo,
+      'Descripción': item.descripcion,
+      'Tipo': item.tipo,
+      'Total Tiempo Real': item.totalTiempoReal,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Resumen");
+    XLSX.writeFile(workbook, "Resumen.xlsx");
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold">Resumen por Producto</h1>
+        <button
+          onClick={handleExport}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+        >
+          Exportar a Excel
+        </button>
       </div>
       <div className="flex items-center gap-4 flex-wrap">
         <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
