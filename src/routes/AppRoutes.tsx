@@ -1,8 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet,Navigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import General from "../pages/General";
 import Resumen from "../pages/Resumen";
+import Login  from "../pages/Login/LoginPage";
 import Comparacion from "../pages/Comparacion";
+import PrivateRoute from "./PrivateRoute";
+import { useAuth } from "../contexts/AuthContext";
 
 const AppLayout = () => (
   <div className="flex">
@@ -14,13 +17,21 @@ const AppLayout = () => (
 );
 
 export const AppRoutes = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<General />} />
-          <Route path="resumen" element={<Resumen />} />
-          <Route path="comparacion" element={<Comparacion />} />
+        <Route
+          path="/"
+          element={isAuthenticated ? <Navigate to="/general" replace /> : <Login />}
+        />
+        <Route element={<PrivateRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/general" element={<General />} />
+            <Route path="/resumen" element={<Resumen />} />
+            <Route path="/comparacion" element={<Comparacion />} />
+          </Route>
         </Route>
       </Routes>
     </Router>
