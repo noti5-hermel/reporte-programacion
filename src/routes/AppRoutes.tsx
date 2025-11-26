@@ -4,6 +4,7 @@ import General from "../pages/General";
 import Resumen from "../pages/Resumen";
 import Login  from "../pages/Login/LoginPage";
 import Comparacion from "../pages/Comparacion";
+import FormatoPage from "../pages/FormatoPage";
 import PrivateRoute from "./PrivateRoute";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -31,6 +32,7 @@ export const AppRoutes = () => {
             <Route path="/general" element={<General />} />
             <Route path="/resumen" element={<Resumen />} />
             <Route path="/comparacion" element={<Comparacion />} />
+            <Route path="/formato" element={<FormatoPage />} />
           </Route>
         </Route>
       </Routes>
