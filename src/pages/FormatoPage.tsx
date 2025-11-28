@@ -66,21 +66,6 @@ const FormatoPage: FC = () => {
         const headers = headerCells.map(cell => ({ text: cell.text, left: cell.left }));
         const dataForExcel: (string | number)[][] = [headers.map(h => h.text)];
 
-        const specialDescriptions = new Map([
-          ['M1', 'EMPAQUE MANUAL MAS MEZCLA'],
-          ['M2', 'EMPAQUE MANUAL GRUPO'],
-          ['M3', 'EMPAQUE BOLSA DE 50, 55 LB'],
-          ['M4', 'EMPAQUE MAQUINA SEMI AUTOMATICA'],
-          ['M5', 'EMPAQUE MAQUINA AUTOMATICA'],
-          ['M7', 'PESADO Y/O FABRICADO'],
-          ['M9', 'MOLIENDA POLVOS/HORNEO'],
-          ['M10', 'MOLIENDA EN PASTA'],
-          ['M11', 'MEZCLA MANUAL POLVO'],
-          ['M12', 'MEZCLA EN MAQUINA/EMPAQUE 25 KG'],
-          ['M13', 'MEZCLAS LIQUIDAS Y/O EMPAQUE'],
-          ['M15', 'FABRICACION DE ADEREZOS, JALEAS']
-        ]);
-
         const processDataRow = (rowData: { left: number; text: string }[], headers: { text: string; left: number }[]) => {
           const newRow = Array(headers.length).fill('');
           rowData.forEach(cell => {
@@ -101,56 +86,61 @@ const FormatoPage: FC = () => {
           return newRow;
         }
         
+        let currentMCode = ''; // Variable para guardar el M-Code del grupo actual
+
         for (const row of tableRows.slice(1)) {
           const code = row[0]?.text;
           const description = row[1]?.text;
 
-          // Regla 1: Filas especiales (M-Codes). Esta tiene prioridad.
-          if (code && description && specialDescriptions.has(code) && description.trim().startsWith(specialDescriptions.get(code)!)) {
+          // Regla 1: Detectar filas de grupo (M-Codes) de forma más robusta.
+          if (code && /^M\d+/.test(code) && description) {
+            currentMCode = code; // Actualizar el código del grupo actual
+
             const specialExcelRow = Array(headers.length).fill('');
             specialExcelRow[0] = code;
-            specialExcelRow[1] = description.trim();
+            specialExcelRow[1] = description.trim(); // Se añade temporalmente, se borrará después
             dataForExcel.push(specialExcelRow);
 
             const dataPart = row.slice(2);
             if (dataPart.length > 0) {
               const dataExcelRow = processDataRow(dataPart, headers);
               if (dataExcelRow.some(cell => cell !== '')) {
+                dataExcelRow[0] = currentMCode; // Añadir el M-Code a la fila de datos
                 dataForExcel.push(dataExcelRow);
               }
             }
             continue; 
           }
 
-          // --- INICIO: NUEVA LÓGICA DE DIVISIÓN GENERAL ---
-          // Regla 2: Para todas las demás filas, buscar si hay que dividir en la posición 250pt.
+          // Regla 2: Para todas las demás filas, aplicar el código de grupo y dividir si es necesario.
           const splitIndex = row.findIndex(cell => cell.left >= 250);
 
-          // Si se encuentra un punto de división y hay contenido antes de él...
           if (splitIndex > 0) {
             const part1 = row.slice(0, splitIndex);
             const part2 = row.slice(splitIndex);
 
-            // Procesar y añadir la primera parte
             const excelRow1 = processDataRow(part1, headers);
             if (excelRow1.some(cell => cell !== '')) {
+              excelRow1[0] = currentMCode;
               dataForExcel.push(excelRow1);
             }
             
-            // Procesar y añadir la segunda parte en una nueva fila
             const excelRow2 = processDataRow(part2, headers);
             if (excelRow2.some(cell => cell !== '')) {
+              excelRow2[0] = currentMCode;
               dataForExcel.push(excelRow2);
             }
           } else {
-            // Si no hay punto de división, procesar la fila completa normalmente.
             const normalRow = processDataRow(row, headers);
             if (normalRow.some(cell => cell !== '')) {
+              normalRow[0] = currentMCode;
               dataForExcel.push(normalRow);
             }
           }
-          // --- FIN: NUEVA LÓGICA DE DIVISIÓN GENERAL ---
         }
+
+        // Al final, eliminar la segunda columna ('Description') de todas las filas generadas.
+        dataForExcel.forEach(row => row.splice(1, 1));
 
         const worksheet = XLSX.utils.aoa_to_sheet(dataForExcel);
         const workbook = XLSX.utils.book_new();
