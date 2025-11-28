@@ -36,9 +36,10 @@ const FormatoPage: FC = () => {
           if (!rowsMap[top]) {
             rowsMap[top] = [];
           }
+          // Guardar el texto original (sin trim) para la función de conversión
           rowsMap[top].push({
             left: parseInt(div.style.left, 10),
-            text: div.textContent?.trim() || '',
+            text: div.textContent || '',
           });
         });
 
@@ -63,13 +64,51 @@ const FormatoPage: FC = () => {
 
         const tableRows = sortedRows.slice(headerRowIndex);
         const headerCells = tableRows[0];
-        const headers = headerCells.map(cell => ({ text: cell.text, left: cell.left }));
+        const headers = headerCells.map(cell => ({ text: cell.text.trim(), left: cell.left }));
         const dataForExcel: (string | number)[][] = [headers.map(h => h.text)];
 
+        /**
+         * Convierte el valor de texto de "Units Req." y lo formatea a 3 decimales.
+         * @param valorStr El texto original de la celda.
+         * @returns El valor convertido y formateado como un string.
+         */
+        const convertirValorSistema = (valorStr: string): string => {
+          const valorTrimmed = valorStr.trim();
+          if (valorTrimmed === '') return (0).toFixed(3); // "0.000"
+
+          const num = parseFloat(valorTrimmed);
+          if (isNaN(num)) return (0).toFixed(3); // "0.000"
+
+          let result: number;
+
+          if (Math.floor(num) > 0) { // ej: 1.0 -> 1.0
+            result = num;
+          } else {
+            const parts = valorTrimmed.split('.');
+            const decimalPart = parts.length > 1 ? parts[1] : '';
+            const decimalDigits = decimalPart.length;
+
+            if (decimalDigits === 3) { // ej: 0.167 -> 0.167
+              result = num;
+            } else if (decimalDigits === 2) { // ej: 0.33 -> 0.033
+              result = num / 10;
+            } else if (decimalDigits === 1) { // ej: 0.n -> 0.00n
+              result = num / 100;
+            } else {
+              result = num; // Fallback
+            }
+          }
+          // Siempre formatar el resultado final a un string con 3 decimales
+          return result.toFixed(3);
+        };
+
+        const unitsReqIndex = headers.findIndex(h => h.text === 'Units Req.');
+
         const processDataRow = (rowData: { left: number; text: string }[], headers: { text: string; left: number }[]) => {
-          const newRow = Array(headers.length).fill('');
+          const newRow: (string | number)[] = Array(headers.length).fill('');
           rowData.forEach(cell => {
-            if (!cell.text) return;
+            if (cell.text === null || cell.text === undefined) return;
+
             let closestHeaderIndex = -1;
             let minDiff = Infinity;
             headers.forEach((header, index) => {
@@ -79,40 +118,45 @@ const FormatoPage: FC = () => {
                 closestHeaderIndex = index;
               }
             });
+
             if (closestHeaderIndex !== -1) {
-              newRow[closestHeaderIndex] = (newRow[closestHeaderIndex] ? newRow[closestHeaderIndex] + ' ' : '') + cell.text;
+              if (closestHeaderIndex === unitsReqIndex) {
+                newRow[closestHeaderIndex] = convertirValorSistema(cell.text);
+              } else {
+                const existingText = newRow[closestHeaderIndex];
+                const newText = cell.text.trim();
+                newRow[closestHeaderIndex] = (existingText ? `${existingText} ` : '') + newText;
+              }
             }
           });
           return newRow;
-        }
-        
-        let currentMCode = ''; // Variable para guardar el M-Code del grupo actual
+        };
+
+        let currentMCode = '';
 
         for (const row of tableRows.slice(1)) {
-          const code = row[0]?.text;
-          const description = row[1]?.text;
+          const code = row[0]?.text.trim();
+          const description = row[1]?.text.trim();
 
-          // Regla 1: Detectar filas de grupo (M-Codes) de forma más robusta.
           if (code && /^M\d+/.test(code) && description) {
-            currentMCode = code; // Actualizar el código del grupo actual
+            currentMCode = code;
 
             const specialExcelRow = Array(headers.length).fill('');
             specialExcelRow[0] = code;
-            specialExcelRow[1] = description.trim(); // Se añade temporalmente, se borrará después
+            specialExcelRow[1] = description;
             dataForExcel.push(specialExcelRow);
 
             const dataPart = row.slice(2);
             if (dataPart.length > 0) {
               const dataExcelRow = processDataRow(dataPart, headers);
               if (dataExcelRow.some(cell => cell !== '')) {
-                dataExcelRow[0] = currentMCode; // Añadir el M-Code a la fila de datos
+                dataExcelRow[0] = currentMCode;
                 dataForExcel.push(dataExcelRow);
               }
             }
-            continue; 
+            continue;
           }
 
-          // Regla 2: Para todas las demás filas, aplicar el código de grupo y dividir si es necesario.
           const splitIndex = row.findIndex(cell => cell.left >= 250);
 
           if (splitIndex > 0) {
@@ -139,7 +183,6 @@ const FormatoPage: FC = () => {
           }
         }
 
-        // Al final, eliminar la segunda columna ('Description') de todas las filas generadas.
         dataForExcel.forEach(row => row.splice(1, 1));
 
         const worksheet = XLSX.utils.aoa_to_sheet(dataForExcel);
