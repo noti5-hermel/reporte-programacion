@@ -1,4 +1,4 @@
-# Reportería de Programación
++++++++++++++++++++++++++++++++++++++++++++++++++# Reportería de Programación
 
 Sistema de reportería desarrollado con React + TypeScript + Vite para visualización y análisis de rendimiento de tareas.
 

@@ -2,15 +2,23 @@ import { useState } from "react";
 import { UploadCloud } from "lucide-react";
 
 export default function Comparacion() {
-  const [resumenFile, setResumenFile] = useState<File | null>(null);
-  const [externoFile, setExternoFile] = useState<File | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [comparisonData, setComparisonData] = useState<any[]>([]);
 
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<File | null>>
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      setter(e.target.files[0]);
+  const handleDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const date = e.target.value;
+    setSelectedDate(date);
+    // Aquí deberías hacer la llamada a la API para obtener los datos de comparación para la fecha seleccionada
+    // y luego actualizar el estado de comparisonData con los datos recibidos.
+    // Por ahora, usaremos datos de ejemplo.
+    if (date) {
+      setComparisonData([
+        { id: 1, producto: "Producto A", resumen: 100, externo: 95, diferencia: 5 },
+        { id: 2, producto: "Producto B", resumen: 200, externo: 210, diferencia: -10 },
+        { id: 3, producto: "Producto C", resumen: 150, externo: 150, diferencia: 0 },
+      ]);
+    } else {
+      setComparisonData([]);
     }
   };
 
@@ -18,71 +26,52 @@ export default function Comparacion() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Comparación de Archivos Excel</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Card para el archivo de Resumen */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-          <h2 className="text-xl font-semibold mb-4">Archivo de Resumen</h2>
-          <p className="text-gray-500 mb-4">
-            Sube el archivo Excel exportado desde la página de "Resumen".
-          </p>
-          <div className="flex flex-col items-center">
-            <UploadCloud className="w-12 h-12 text-gray-400 mb-4" />
-            <input
-              type="file"
-              id="resumen-file-upload"
-              className="hidden"
-              accept=".xlsx, .xls"
-              onChange={(e) => handleFileChange(e, setResumenFile)}
-            />
-            <label
-              htmlFor="resumen-file-upload"
-              className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-            >
-              Seleccionar archivo
-            </label>
-            {resumenFile && (
-              <p className="mt-4 text-sm text-gray-600">
-                Archivo seleccionado: <strong>{resumenFile.name}</strong>
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Card para el archivo Externo */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-          <h2 className="text-xl font-semibold mb-4">Archivo Externo</h2>
-          <p className="text-gray-500 mb-4">
-            Sube el archivo Excel del recurso externo.
-          </p>
-          <div className="flex flex-col items-center">
-            <UploadCloud className="w-12 h-12 text-gray-400 mb-4" />
-            <input
-              type="file"
-              id="externo-file-upload"
-              className="hidden"
-              accept=".xlsx, .xls"
-              onChange={(e) => handleFileChange(e, setExternoFile)}
-            />
-            <label
-              htmlFor="externo-file-upload"
-              className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-            >
-              Seleccionar archivo
-            </label>
-            {externoFile && (
-              <p className="mt-4 text-sm text-gray-600">
-                Archivo seleccionado: <strong>{externoFile.name}</strong>
-              </p>
-            )}
-          </div>
-        </div>
+      <div className="flex items-center space-x-4">
+        <label htmlFor="date-select" className="text-lg font-semibold">
+          Selecciona una fecha:
+        </label>
+        <select
+          id="date-select"
+          value={selectedDate}
+          onChange={handleDateChange}
+          className="p-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">--Selecciona una fecha--</option>
+          <option value="2023-10-26">26 de Octubre de 2023</option>
+          <option value="2023-10-25">25 de Octubre de 2023</option>
+          <option value="2023-10-24">24 de Octubre de 2023</option>
+        </select>
       </div>
 
-      {resumenFile && externoFile && (
-        <div className="text-center mt-8">
-          <button className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">
-            Comparar Archivos
-          </button>
+      {selectedDate && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">
+            Resultados de la Comparación - {selectedDate}
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-2 px-4 border-b">ID</th>
+                  <th className="py-2 px-4 border-b">Producto</th>
+                  <th className="py-2 px-4 border-b">Resumen</th>
+                  <th className="py-2 px-4 border-b">Externo</th>
+                  <th className="py-2 px-4 border-b">Diferencia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonData.map((row) => (
+                  <tr key={row.id} className="hover:bg-gray-50">
+                    <td className="py-2 px-4 border-b">{row.id}</td>
+                    <td className="py-2 px-4 border-b">{row.producto}</td>
+                    <td className="py-2 px-4 border-b">{row.resumen}</td>
+                    <td className="py-2 px-4 border-b">{row.externo}</td>
+                    <td className="py-2 px-4 border-b">{row.diferencia}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
