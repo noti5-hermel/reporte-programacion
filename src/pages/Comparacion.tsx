@@ -1,4 +1,4 @@
-import { useState } from "react";
+git import { useState } from "react";
 import { UploadCloud } from "lucide-react";
 
 export default function Comparacion() {
@@ -61,12 +61,12 @@ export default function Comparacion() {
         </select>
         <label htmlFor="resumen-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
           <UploadCloud className="inline-block mr-2" />
-          Importar Resumen
+          {resumenFile ? resumenFile.name : "Importar Resumen"}
           <input id="resumen-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'resumen')} />
         </label>
         <label htmlFor="documento-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
           <UploadCloud className="inline-block mr-2" />
-          Importar Documento Real
+          {documentoFile ? documentoFile.name : "Importar Documento Real"}
           <input id="documento-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'documento')} />
         </label>
         {resumenFile && documentoFile && (
