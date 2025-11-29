@@ -4,6 +4,8 @@ import { UploadCloud } from "lucide-react";
 export default function Comparacion() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonData, setComparisonData] = useState<any[]>([]);
+  const [resumenFile, setResumenFile] = useState<File | null>(null);
+  const [documentoFile, setDocumentoFile] = useState<File | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const date = e.target.value;
@@ -21,6 +23,22 @@ export default function Comparacion() {
       setComparisonData([]);
     }
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (fileType === 'resumen') {
+        setResumenFile(file);
+      } else {
+        setDocumentoFile(file);
+      }
+    }
+  };
+
+  const handleComparison = () => {
+    // Aquí va la lógica para comparar los dos archivos
+    console.log("Comparando archivos:", resumenFile, documentoFile);
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -41,6 +59,21 @@ export default function Comparacion() {
           <option value="2023-10-25">25 de Octubre de 2023</option>
           <option value="2023-10-24">24 de Octubre de 2023</option>
         </select>
+        <label htmlFor="resumen-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
+          <UploadCloud className="inline-block mr-2" />
+          Importar Resumen
+          <input id="resumen-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'resumen')} />
+        </label>
+        <label htmlFor="documento-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
+          <UploadCloud className="inline-block mr-2" />
+          Importar Documento Real
+          <input id="documento-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'documento')} />
+        </label>
+        {resumenFile && documentoFile && (
+          <button onClick={handleComparison} className="p-2 border border-gray-300 rounded-lg bg-blue-500 text-white hover:bg-blue-600">
+            Realizar Comparación
+          </button>
+        )}
       </div>
 
       {selectedDate && (
