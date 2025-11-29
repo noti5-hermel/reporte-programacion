@@ -36,7 +36,6 @@ const FormatoPage: FC = () => {
           if (!rowsMap[top]) {
             rowsMap[top] = [];
           }
-          // Guardar el texto original (sin trim) para la función de conversión
           rowsMap[top].push({
             left: parseInt(div.style.left, 10),
             text: div.textContent || '',
@@ -67,38 +66,31 @@ const FormatoPage: FC = () => {
         const headers = headerCells.map(cell => ({ text: cell.text.trim(), left: cell.left }));
         const dataForExcel: (string | number)[][] = [headers.map(h => h.text)];
 
-        /**
-         * Convierte el valor de texto de "Units Req." y lo formatea a 3 decimales.
-         * @param valorStr El texto original de la celda.
-         * @returns El valor convertido y formateado como un string.
-         */
         const convertirValorSistema = (valorStr: string): string => {
           const valorTrimmed = valorStr.trim();
-          if (valorTrimmed === '') return (0).toFixed(3); // "0.000"
+          if (valorTrimmed === '') return (0).toFixed(3);
 
           const num = parseFloat(valorTrimmed);
-          if (isNaN(num)) return (0).toFixed(3); // "0.000"
+          if (isNaN(num)) return (0).toFixed(3);
 
           let result: number;
-
-          if (Math.floor(num) > 0) { // ej: 1.0 -> 1.0
+          if (Math.floor(num) > 0) {
             result = num;
           } else {
             const parts = valorTrimmed.split('.');
             const decimalPart = parts.length > 1 ? parts[1] : '';
             const decimalDigits = decimalPart.length;
 
-            if (decimalDigits === 3) { // ej: 0.167 -> 0.167
+            if (decimalDigits === 3) {
               result = num;
-            } else if (decimalDigits === 2) { // ej: 0.33 -> 0.033
+            } else if (decimalDigits === 2) {
               result = num / 10;
-            } else if (decimalDigits === 1) { // ej: 0.n -> 0.00n
+            } else if (decimalDigits === 1) {
               result = num / 100;
             } else {
-              result = num; // Fallback
+              result = num;
             }
           }
-          // Siempre formatar el resultado final a un string con 3 decimales
           return result.toFixed(3);
         };
 
@@ -138,51 +130,51 @@ const FormatoPage: FC = () => {
           const code = row[0]?.text.trim();
           const description = row[1]?.text.trim();
 
-          if (code && /^M\d+/.test(code) && description) {
-            currentMCode = code;
+          const isMGroupRow = code && /^M\d+/.test(code) && description;
 
-            const specialExcelRow = Array(headers.length).fill('');
-            specialExcelRow[0] = code;
-            specialExcelRow[1] = description;
-            dataForExcel.push(specialExcelRow);
-
+          if (isMGroupRow) {
+            currentMCode = code; // Actualizar el código del grupo actual
+            // NO se agrega la fila de cabecera M. Solo se procesa el resto de la línea si tiene datos.
             const dataPart = row.slice(2);
             if (dataPart.length > 0) {
-              const dataExcelRow = processDataRow(dataPart, headers);
-              if (dataExcelRow.some(cell => cell !== '')) {
-                dataExcelRow[0] = currentMCode;
-                dataForExcel.push(dataExcelRow);
-              }
+                const dataExcelRow = processDataRow(dataPart, headers);
+                const isRowMeaningful = dataExcelRow.some((cell, index) => (index === unitsReqIndex ? cell !== '0.000' : cell !== ''));
+                if (isRowMeaningful) {
+                    dataExcelRow[0] = currentMCode;
+                    dataForExcel.push(dataExcelRow);
+                }
             }
-            continue;
+            continue; // Ir a la siguiente línea del archivo
           }
 
+          // Si no es una fila de grupo M, es una fila de datos normal
           const splitIndex = row.findIndex(cell => cell.left >= 250);
-
+          
           if (splitIndex > 0) {
             const part1 = row.slice(0, splitIndex);
             const part2 = row.slice(splitIndex);
 
             const excelRow1 = processDataRow(part1, headers);
-            if (excelRow1.some(cell => cell !== '')) {
+            if (excelRow1.some((c, i) => (i === unitsReqIndex ? c !== '0.000' : c !== ''))) {
               excelRow1[0] = currentMCode;
               dataForExcel.push(excelRow1);
             }
             
             const excelRow2 = processDataRow(part2, headers);
-            if (excelRow2.some(cell => cell !== '')) {
+            if (excelRow2.some((c, i) => (i === unitsReqIndex ? c !== '0.000' : c !== ''))) {
               excelRow2[0] = currentMCode;
               dataForExcel.push(excelRow2);
             }
           } else {
             const normalRow = processDataRow(row, headers);
-            if (normalRow.some(cell => cell !== '')) {
+            if (normalRow.some((c, i) => (i === unitsReqIndex ? c !== '0.000' : c !== ''))) {
               normalRow[0] = currentMCode;
               dataForExcel.push(normalRow);
             }
           }
         }
 
+        // Eliminar la columna de descripción del grupo (columna B)
         dataForExcel.forEach(row => row.splice(1, 1));
 
         const worksheet = XLSX.utils.aoa_to_sheet(dataForExcel);
@@ -228,7 +220,7 @@ const FormatoPage: FC = () => {
           className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-300"
         >
           {processing ? 'Procesando...' : 'Generar Excel'}
-        </button>
+       </button>
       </div>
     </div>
   );
