@@ -157,7 +157,7 @@ export default function Comparacion() {
         let diffPercent: number | null = null;
         if (unitsReq !== 0) {
           const diff = (unitsReq - totalTiempoReal) / unitsReq;
-          diffPercent = diff * 100;
+          diffPercent = diff * 10;
         }
 
         return {
