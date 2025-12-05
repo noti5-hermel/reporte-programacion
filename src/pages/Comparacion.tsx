@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { UploadCloud } from "lucide-react";
 import * as XLSX from "xlsx";
+import { API_BASE_URL } from "../api/config";
 
 type ComparisonRow = {
   codigo: string;
@@ -18,12 +19,119 @@ export default function Comparacion() {
   const [resumenFile, setResumenFile] = useState<File | null>(null);
   const [documentoFile, setDocumentoFile] = useState<File | null>(null);
   const [selectedTipo, setSelectedTipo] = useState<string>("");
+  const [saving, setSaving] = useState<boolean>(false);
+  const [fechasDisponibles, setFechasDisponibles] = useState<Array<{ fecha: string; id?: number }>>([]);
+  const [loadingFechas, setLoadingFechas] = useState<boolean>(false);
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const loadComparacionByDate = async (fecha: string) => {
+    if (!fecha) {
+      setComparisonData([]);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("No estás autenticado. Por favor, inicia sesión.");
+        return;
+      }
+
+      // Intentar obtener los registros de comparación por fecha
+      // El endpoint acepta compareDate como parámetro
+      const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/?compareDate=${encodeURIComponent(fecha)}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Transformar los datos del API al formato ComparisonRow
+        const transformedData: ComparisonRow[] = Array.isArray(data)
+          ? data.map((item: any) => {
+              // Calcular diffPercent si tenemos unitsReq
+              let diffPercent: number | null = null;
+              if (item.unitsReq && item.unitsReq !== 0) {
+                const diff = (item.unitsReq - item.totalTiempoReal) / item.unitsReq;
+                diffPercent = diff * 10; // Multiplicar por 10 como en el código actual
+              }
+
+              return {
+                codigo: item.codigo || "",
+                descripcion: item.descripcion || "",
+                tipo: item.tipo || "",
+                numeroPersonas: item.numeroPersonas || 0,
+                totalTiempoReal: item.totalTiempoReal || 0,
+                unitsReq: item.unitsReq || 0,
+                diffPercent: diffPercent,
+              };
+            })
+          : [];
+        
+        setComparisonData(transformedData);
+      } else {
+        console.error("Error al cargar los registros de comparación");
+        setComparisonData([]);
+      }
+    } catch (error) {
+      console.error("Error al cargar los registros de comparación:", error);
+      setComparisonData([]);
+    }
+  };
+
+  const handleDateChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const date = e.target.value;
     setSelectedDate(date);
-    // Por ahora solo guardamos la fecha seleccionada, la comparación se hace a partir de los archivos.
+    
+    // Limpiar archivos y filtro cuando se selecciona una fecha
+    setResumenFile(null);
+    setDocumentoFile(null);
+    setSelectedTipo("");
+    
+    // Limpiar los inputs de archivo
+    const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
+    const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
+    if (resumenInput) resumenInput.value = "";
+    if (documentoInput) documentoInput.value = "";
+    
+    // Cargar los registros de comparación para la fecha seleccionada
+    await loadComparacionByDate(date);
   };
+
+  const loadFechas = async () => {
+    setLoadingFechas(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoadingFechas(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Asumimos que la respuesta es un array de objetos con fecha
+        setFechasDisponibles(Array.isArray(data) ? data : []);
+      } else {
+        console.error("Error al cargar las fechas");
+      }
+    } catch (error) {
+      console.error("Error al cargar las fechas:", error);
+    } finally {
+      setLoadingFechas(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFechas();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
     const file = e.target.files?.[0];
@@ -178,6 +286,92 @@ export default function Comparacion() {
     }
   };
 
+  const handleSaveComparison = async () => {
+    if (comparisonData.length === 0) {
+      alert("No hay datos para guardar. Realiza una comparación primero.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("No estás autenticado. Por favor, inicia sesión.");
+        setSaving(false);
+        return;
+      }
+
+      // Transformar los datos al formato requerido por el endpoint
+      const compareDate = new Date().toISOString();
+      const dataToSend = comparisonData.map((row) => ({
+        codigo: row.codigo,
+        descripcion: row.descripcion,
+        tipo: row.tipo,
+        numeroPersonas: row.numeroPersonas,
+        totalTiempoReal: row.totalTiempoReal,
+        unitsReq: row.unitsReq,
+        diferencia: row.totalTiempoReal - row.unitsReq, // diferencia = totalTiempoReal - unitsReq
+        compareDate: compareDate,
+      }));
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (response.ok) {
+        // Guardar la fecha en el historico
+        try {
+          const fechaResponse = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              fecha: compareDate,
+            }),
+          });
+
+          if (!fechaResponse.ok) {
+            console.error("Error al guardar la fecha en el historico");
+          }
+        } catch (fechaError) {
+          console.error("Error al guardar la fecha en el historico:", fechaError);
+        }
+
+        // Limpiar los archivos y datos después de guardar exitosamente
+        setResumenFile(null);
+        setDocumentoFile(null);
+        setComparisonData([]);
+        setSelectedTipo("");
+        
+        // Limpiar los inputs de archivo
+        const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
+        const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
+        if (resumenInput) resumenInput.value = "";
+        if (documentoInput) documentoInput.value = "";
+
+        // Recargar las fechas disponibles
+        await loadFechas();
+
+        alert("Comparación guardada exitosamente.");
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(`Error al guardar la comparación: ${errorData.message || response.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error al guardar la comparación:", error);
+      alert("Hubo un error al guardar la comparación. Ver consola para más detalles.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Calcular los tipos únicos disponibles
   const tiposUnicos = useMemo(() => {
     return Array.from(new Set(comparisonData.map((row) => row.tipo).filter(Boolean))).sort();
@@ -204,11 +398,22 @@ export default function Comparacion() {
           value={selectedDate}
           onChange={handleDateChange}
           className="p-2 border border-gray-300 rounded-lg"
+          disabled={loadingFechas}
         >
           <option value="">--Selecciona una fecha--</option>
-          <option value="2023-10-26">26 de Octubre de 2023</option>
-          <option value="2023-10-25">25 de Octubre de 2023</option>
-          <option value="2023-10-24">24 de Octubre de 2023</option>
+          {fechasDisponibles.map((item, index) => {
+            const fecha = new Date(item.fecha);
+            const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+            return (
+              <option key={item.id || index} value={item.fecha}>
+                {fechaFormateada}
+              </option>
+            );
+          })}
         </select>
         <label htmlFor="resumen-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
           <UploadCloud className="inline-block mr-2" />
@@ -250,6 +455,13 @@ export default function Comparacion() {
                   </option>
                 ))}
               </select>
+              <button
+                onClick={handleSaveComparison}
+                disabled={saving}
+                className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {saving ? "Guardando..." : "Guardar Comparación"}
+              </button>
             </div>
           </div>
           <div className="overflow-x-auto">
