@@ -478,12 +478,13 @@ export default function Comparacion() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row) => {
+                {filteredData.map((row,index) => {
                   const isOverThreshold =
                     row.diffPercent !== null && row.diffPercent > 25;
 
                   return (
-                    <tr key={row.codigo} className="hover:bg-gray-50">
+                    <tr key={`${row.codigo}-${index}`} className="hover:bg-gray-50">
+
                       <td className="py-2 px-4 border-b">{row.codigo}</td>
                       <td className="py-2 px-4 border-b">{row.descripcion}</td>
                       <td className="py-2 px-4 border-b">{row.tipo}</td>
