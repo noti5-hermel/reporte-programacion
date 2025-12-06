@@ -44,9 +44,14 @@ export default function Comparacion() {
           Authorization: `Bearer ${token}`,
         },
       });
+      // 1. Leer el cuerpo de la respuesta UNA SOLA VEZ
+      const data = await response.json();
 
+      // 2. Ahora sí puedes hacer log de los datos reales que recibiste
+      console.log("Datos recibidos de la API:", data);
+
+      // 3. Usar response.ok para decidir qué hacer con los datos ya leídos
       if (response.ok) {
-        const data = await response.json();
         // Transformar los datos del API al formato ComparisonRow
         const transformedData: ComparisonRow[] = Array.isArray(data)
           ? data.map((item: any) => {
