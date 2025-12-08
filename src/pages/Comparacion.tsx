@@ -61,7 +61,7 @@ export default function Comparacion() {
                 const diff = (item.unitsReq - item.totalTiempoReal) / item.unitsReq;
                 diffPercent = diff * 10; // Multiplicar por 10 como en el código actual
               }
-
+              console.log(item.codigo,item.descripcion,item.totalTiempoReal);
               return {
                 codigo: item.codigo || "",
                 descripcion: item.descripcion || "",
