@@ -48,27 +48,31 @@ export default function Comparacion() {
       const data = await response.json();
 
       // 2. Ahora sí puedes hacer log de los datos reales que recibiste
-      console.log("Datos recibidos de la API:", data);
-
-      // 3. Usar response.ok para decidir qué hacer con los datos ya leídos
+      //console.log("Datos recibidos de la API:", data);
+    // 3. Usar response.ok para decidir qué hacer con los datos ya leídos
       if (response.ok) {
         // Transformar los datos del API al formato ComparisonRow
         const transformedData: ComparisonRow[] = Array.isArray(data)
+        
+        
           ? data.map((item: any) => {
+            console.log("Item original del API:", item);
               // Calcular diffPercent si tenemos unitsReq
+//console.log("unitReq:", item.unitsReq, "totalTiempoReal:", item.totalTiempoReal);
               let diffPercent: number | null = null;
-              if (item.unitsReq && item.unitsReq !== 0) {
-                const diff = (item.unitsReq - item.totalTiempoReal) / item.unitsReq;
+              if (item.tiempo && item.total_tiempo_real !== 0) {
+                const diff = (item.tiempo - item.total_tiempo_real) / item.tiempo;
                 diffPercent = diff * 10; // Multiplicar por 10 como en el código actual
               }
-
+//console.log(diffPercent);
+//console.log(`Transformando item: codigo=${item.codigo}, totalTiempoReal=${item.totalTiempoReal}, unitsReq=${item.unitsReq}, diffPercent=${diffPercent}`);
               return {
-                codigo: item.codigo || "",
-                descripcion: item.descripcion || "",
+                codigo: item.code || "",
+                descripcion: item.description || "",
                 tipo: item.tipo || "",
-                numeroPersonas: item.numeroPersonas || 0,
-                totalTiempoReal: item.totalTiempoReal || 0,
-                unitsReq: item.unitsReq || 0,
+                numeroPersonas: item.numero_personas || 0,
+                totalTiempoReal: Number(item.total_tiempo_real) || 0,
+                unitsReq: Number(item.tiempo) || 0,
                 diffPercent: diffPercent,
               };
             })
@@ -106,7 +110,7 @@ export default function Comparacion() {
 
   const loadFechas = async () => {
     setLoadingFechas(true);
-    try {
+    try { 
       const token = localStorage.getItem("token");
       if (!token) {
         setLoadingFechas(false);
