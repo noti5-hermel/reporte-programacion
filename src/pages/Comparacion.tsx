@@ -466,10 +466,10 @@ export default function Comparacion() {
                 ))}
               </select>
               <button
-                onClick={handleSaveComparison}
-                disabled={saving}
-                className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
+  onClick={handleSaveComparison}
+  disabled={saving || selectedDate !== ""}
+  className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400"
+>
                 {saving ? "Guardando..." : "Guardar Comparación"}
               </button>
             </div>
