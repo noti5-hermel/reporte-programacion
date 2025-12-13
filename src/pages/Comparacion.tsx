@@ -22,6 +22,8 @@ export default function Comparacion() {
   const [saving, setSaving] = useState<boolean>(false);
   const [fechasDisponibles, setFechasDisponibles] = useState<Array<{ fecha: string; id?: number }>>([]);
   const [loadingFechas, setLoadingFechas] = useState<boolean>(false);
+  const [deleting,setDeleting] = useState<boolean>(false);
+
 
   const loadComparacionByDate = async (fecha: string) => {
     if (!fecha) {
@@ -382,6 +384,57 @@ export default function Comparacion() {
     }
   };
 
+    /**
+   * Maneja la eliminación de un registro de comparación histórico.
+   * Solo se activa si hay una fecha seleccionada.
+   */
+    const handleDeleteComparison = async () => {
+      if (!selectedDate) {
+        alert("Por favor, selecciona un registro del historial para eliminar.");
+        return;
+      }
+  
+      // Pide confirmación al usuario antes de proceder.
+      if (!window.confirm("¿Estás seguro de que quieres eliminar esta comparación? Esta acción no se puede deshacer.")) {
+        return;
+      }
+  
+      setDeleting(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("No estás autenticado.");
+          setDeleting(false);
+          return;
+        }
+  
+        // La API debe poder manejar una petición DELETE en este endpoint.
+        const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/?compareDate=${encodeURIComponent(selectedDate)}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+  
+        if (response.ok) {
+          alert("Comparación eliminada exitosamente.");
+          // Limpia la vista y recarga las fechas.
+          setComparisonData([]);
+          setSelectedDate("");
+          await loadFechas();
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          alert(`Error al eliminar la comparación: ${errorData.message || response.statusText}`);
+        }
+      } catch (error) {
+        console.error("Error al eliminar la comparación:", error);
+        alert("Hubo un error al eliminar la comparación.");
+      } finally {
+        setDeleting(false);
+      }
+    };
+  
+
   // Calcular los tipos únicos disponibles
   const tiposUnicos = useMemo(() => {
     return Array.from(new Set(comparisonData.map((row) => row.tipo).filter(Boolean))).sort();
@@ -449,30 +502,38 @@ export default function Comparacion() {
               Resultados de la Comparación
             </h2>
             <div className="flex items-center space-x-4">
-              <label htmlFor="tipo-filter" className="text-sm font-medium">
-                Filtrar por Tipo:
-              </label>
+              <label htmlFor="tipo-filter" className="text-sm font-medium">Filtrar por Tipo:</label>
               <select
                 id="tipo-filter"
                 value={selectedTipo}
                 onChange={(e) => setSelectedTipo(e.target.value)}
-                className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2 border border-gray-300 rounded-lg"
               >
                 <option value="">Todos los tipos</option>
-                {tiposUnicos.map((tipo) => (
-                  <option key={tipo} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
+                {tiposUnicos.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
               </select>
+
+              {/* El botón de eliminar solo aparece si se ha seleccionado una fecha */}
+              {selectedDate && (
+                <button
+                  onClick={handleDeleteComparison}
+                  disabled={deleting}
+                  className="p-2 border border-gray-300 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
+                >
+                  {deleting ? "Eliminando..." : "Eliminar Comparación"}
+                </button>
+              )}
+
+              {/* El botón de guardar se deshabilita si se ha seleccionado una fecha */}
               <button
                 onClick={handleSaveComparison}
-                disabled={saving}
-                className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={saving || selectedDate !== ""}
+                className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400"
               >
                 {saving ? "Guardando..." : "Guardar Comparación"}
               </button>
             </div>
+
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
