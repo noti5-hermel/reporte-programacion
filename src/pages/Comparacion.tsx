@@ -494,9 +494,9 @@ export default function Comparacion() {
                 <>
                   <button
                     onClick={handleClearComparison}
-                    className="p-2 border border-gray-300 rounded-lg bg-gray-500 text-white hover:bg-gray-600"
+                    className="p-2 border border-red-300 rounded-lg bg-red-500 text-white hover:bg-red-600"
                   >
-                    Limpiar
+                    Cancelar
                   </button>
                   <button
                     onClick={handleSaveComparison}
