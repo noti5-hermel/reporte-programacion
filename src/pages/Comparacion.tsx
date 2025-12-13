@@ -22,7 +22,7 @@ export default function Comparacion() {
   const [saving, setSaving] = useState<boolean>(false);
   const [fechasDisponibles, setFechasDisponibles] = useState<Array<{ fecha: string; id?: number }>>([]);
   const [loadingFechas, setLoadingFechas] = useState<boolean>(false);
-  const [deleting,setDeleting] = useState<boolean>(false);
+  //const [deleting,setDeleting] = useState<boolean>(false);
 
 
   const loadComparacionByDate = async (fecha: string) => {
@@ -385,56 +385,30 @@ export default function Comparacion() {
   };
 
     /**
-   * Maneja la eliminación de un registro de comparación histórico.
-   * Solo se activa si hay una fecha seleccionada.
+   * Limpia los datos de la comparación actual en la pantalla.
+   * Restablece los archivos seleccionados y los resultados de la tabla.
    */
-    const handleDeleteComparison = async () => {
-      if (!selectedDate) {
-        alert("Por favor, selecciona un registro del historial para eliminar.");
-        return;
-      }
-  
-      // Pide confirmación al usuario antes de proceder.
-      if (!window.confirm("¿Estás seguro de que quieres eliminar esta comparación? Esta acción no se puede deshacer.")) {
-        return;
-      }
-  
-      setDeleting(true);
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("No estás autenticado.");
-          setDeleting(false);
-          return;
-        }
-  
-        // La API debe poder manejar una petición DELETE en este endpoint.
-        const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/?compareDate=${encodeURIComponent(selectedDate)}`, {
-          method: "DELETE",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-  
-        if (response.ok) {
-          alert("Comparación eliminada exitosamente.");
-          // Limpia la vista y recarga las fechas.
-          setComparisonData([]);
-          setSelectedDate("");
-          await loadFechas();
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          alert(`Error al eliminar la comparación: ${errorData.message || response.statusText}`);
-        }
-      } catch (error) {
-        console.error("Error al eliminar la comparación:", error);
-        alert("Hubo un error al eliminar la comparación.");
-      } finally {
-        setDeleting(false);
+    const handleClearComparison = () => {
+      // Pide confirmación para evitar limpiezas accidentales.
+      if (window.confirm("¿Estás seguro de que quieres limpiar la comparación actual? Se perderán los datos no guardados.")) {
+        setComparisonData([]);
+        setResumenFile(null);
+        setDocumentoFile(null);
+        setSelectedTipo("");
+        
+        // Limpia visualmente los inputs de archivo.
+        const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
+        const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
+        if (resumenInput) resumenInput.value = "";
+        if (documentoInput) documentoInput.value = "";
       }
     };
   
 
+    /**
+   * Maneja la eliminación de un registro de comparación histórico.
+   * Solo se activa si hay una fecha seleccionada.
+   */
   // Calcular los tipos únicos disponibles
   const tiposUnicos = useMemo(() => {
     return Array.from(new Set(comparisonData.map((row) => row.tipo).filter(Boolean))).sort();
@@ -513,26 +487,30 @@ export default function Comparacion() {
                 {tiposUnicos.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
               </select>
 
-              {/* El botón de eliminar solo aparece si se ha seleccionado una fecha */}
-              {selectedDate && (
-                <button
-                  onClick={handleDeleteComparison}
-                  disabled={deleting}
-                  className="p-2 border border-gray-300 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
-                >
-                  {deleting ? "Eliminando..." : "Eliminar Comparación"}
-                </button>
+              {/* --- INICIO DEL CAMBIO: Lógica de botones --- */}
+
+              {/* Muestra los botones de acción solo si es una NUEVA comparación */}
+              {!selectedDate && (
+                <>
+                  <button
+                    onClick={handleClearComparison}
+                    className="p-2 border border-gray-300 rounded-lg bg-gray-500 text-white hover:bg-gray-600"
+                  >
+                    Limpiar
+                  </button>
+                  <button
+                    onClick={handleSaveComparison}
+                    disabled={saving}
+                    className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400"
+                  >
+                    {saving ? "Guardando..." : "Guardar Comparación"}
+                  </button>
+                </>
               )}
 
-              {/* El botón de guardar se deshabilita si se ha seleccionado una fecha */}
-              <button
-                onClick={handleSaveComparison}
-                disabled={saving || selectedDate !== ""}
-                className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400"
-              >
-                {saving ? "Guardando..." : "Guardar Comparación"}
-              </button>
+              {/* --- FIN DEL CAMBIO --- */}
             </div>
+
 
           </div>
           <div className="overflow-x-auto">
