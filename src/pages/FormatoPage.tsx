@@ -1,29 +1,30 @@
 import { useState, type ChangeEvent, type FC } from 'react';
 import * as XLSX from 'xlsx';
-import { Select } from '../../components/Select'; // Importar el nuevo componente
+import { Select } from '../../components/Select';
+import { processManoDeObra } from './FormatoPage/processors/manoDeObraProcessor';
 
 /**
  * Componente `FormatoPage`
- * (La descripción del componente permanece igual)
+ * 
+ * Orquesta la carga de archivos HTM y delega el procesamiento a módulos específicos
+ * según el formato seleccionado por el usuario.
  */
 const FormatoPage: FC = () => {
   // --- ESTADOS DEL COMPONENTE ---
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
-  // Nuevo estado para el formato seleccionado.
-  const [selectedFormat, setSelectedFormat] = useState<string>('procesado');
+  const [selectedFormat, setSelectedFormat] = useState<string>('manoDeObra');
 
   // --- OPCIONES PARA EL SELECT ---
 
   const formatOptions = [
-    { value: 'procesado', label: 'Formato Procesado (Detallado)' },
+    { value: 'manoDeObra', label: 'Formato Mano de Obra (Detallado)' },
     { value: 'resumen', label: 'Formato de Resumen (por Grupo)' },
   ];
 
   /**
    * Maneja el evento de selección de archivo.
-   * @param {ChangeEvent<HTMLInputElement>} event - El evento del input de tipo 'file'.
    */
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -33,7 +34,6 @@ const FormatoPage: FC = () => {
 
   /**
    * Orquesta el proceso completo de lectura, procesamiento y generación del Excel.
-   * La lógica interna ahora depende del `selectedFormat`.
    */
   const handleProcessFile = () => {
     if (!selectedFile) {
@@ -50,7 +50,7 @@ const FormatoPage: FC = () => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlContent, 'text/html');
         
-        // ... (Toda la lógica de parseo del HTML y ordenamiento de filas permanece exactamente igual)
+        // --- PARSEO BÁSICO DEL HTM (COMÚN A TODOS LOS FORMATOS) ---
         const allDivs = Array.from(doc.querySelectorAll('div'));
         const rowsMap: { [top: string]: { left: number; text: string }[] } = {};
         allDivs.forEach(div => {
@@ -71,40 +71,48 @@ const FormatoPage: FC = () => {
             return;
         }
         const tableRows = sortedRows.slice(headerRowIndex);
+        
+        // --- DELEGACIÓN DEL PROCESAMIENTO ---
+        let dataForExcel: (string | number)[][];
+        let fileName = 'reporte.xlsx';
 
-        // --- Lógica condicional para generar el Excel según el formato seleccionado ---
-        if (selectedFormat === 'procesado') {
-          // ... (Toda tu lógica existente para el formato detallado va aquí)
-          // ... Esto incluye `processDataRow`, el bucle for, `convertirValorSistema`, etc.
-          const dataForExcel: (string | number)[][] = [['Simulación de datos procesados']]; // Reemplazar con tu lógica real
-          const worksheet = XLSX.utils.aoa_to_sheet(dataForExcel);
-          const workbook = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte Procesado');
-          XLSX.writeFile(workbook, 'reporte_procesado.xlsx');
-        } else if (selectedFormat === 'resumen') {
-          // Lógica para generar el reporte de resumen.
-          const summary: { [group: string]: number } = {};
-          let currentMCode = '';
-          for (const row of tableRows.slice(1)) {
-            const code = row[0]?.text.trim();
-            const description = row[1]?.text.trim();
-            const isMGroupRow = code && /^M\d+/.test(code) && description;
-            if (isMGroupRow) {
-              currentMCode = code;
-              if (!summary[currentMCode]) summary[currentMCode] = 0;
-            } else if (currentMCode) {
-              summary[currentMCode]++;
+        switch (selectedFormat) {
+          case 'manoDeObra':
+            dataForExcel = processManoDeObra(tableRows);
+            fileName = 'reporte_mano_de_obra.xlsx';
+            break;
+          
+          case 'resumen':
+            // Lógica para generar el reporte de resumen.
+            const summary: { [group: string]: number } = {};
+            let currentMCode = '';
+            for (const row of tableRows.slice(1)) {
+              const code = row[0]?.text.trim();
+              const description = row[1]?.text.trim();
+              const isMGroupRow = code && /^M\d+/.test(code) && description;
+              if (isMGroupRow) {
+                currentMCode = code;
+                if (!summary[currentMCode]) summary[currentMCode] = 0;
+              } else if (currentMCode) {
+                summary[currentMCode]++;
+              }
             }
-          }
-          const dataForExcel = [['Grupo (M)', 'Cantidad de Filas de Datos']];
-          Object.entries(summary).forEach(([group, count]) => {
-            dataForExcel.push([group, count]);
-          });
-          const worksheet = XLSX.utils.aoa_to_sheet(dataForExcel);
-          const workbook = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(workbook, worksheet, 'Resumen');
-          XLSX.writeFile(workbook, 'reporte_resumen.xlsx');
+            dataForExcel = [['Grupo (M)', 'Cantidad de Filas de Datos']];
+            Object.entries(summary).forEach(([group, count]) => {
+              dataForExcel.push([group, count]);
+            });
+            fileName = 'reporte_resumen.xlsx';
+            break;
+
+          default:
+            throw new Error(`Formato desconocido: ${selectedFormat}`);
         }
+
+        // --- GENERACIÓN DEL EXCEL (COMÚN A TODOS LOS FORMATOS) ---
+        const worksheet = XLSX.utils.aoa_to_sheet(dataForExcel);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
+        XLSX.writeFile(workbook, fileName);
 
       } catch (error) {
         console.error('Error procesando el archivo:', error);
@@ -122,13 +130,11 @@ const FormatoPage: FC = () => {
     reader.readAsText(selectedFile);
   };
 
-  // --- RENDERIZADO DEL COMPONENTE ---
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Procesar Formato HTM</h1>
       <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
         
-        {/* Usando el nuevo componente Select */}
         <Select
           id="format-select"
           label="Selecciona el formato a generar"
