@@ -1,16 +1,15 @@
 import { useState } from "react";
 import {SidebarItem} from "./SidebarItem";
-import { LogOut,ChevronLeft,TableProperties,ClipboardList,GitCompareArrows,FileText } from "lucide-react";
+import { LogOut, ChevronLeft, TableProperties, ClipboardList, GitCompareArrows, FileText, PackageCheck } from "lucide-react"; // Añadir nuevo ícono
 import { useAuth } from "../../contexts/AuthContext";
 
 const Sidebar = () => {
-
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { logout } = useAuth();
   
- return (
+  return (
     <aside
-      className={`min-h-screen sticky top-0 bg-slate-800 text-white p-4 transition-all duration-300 ease-in-out flex flex-col  flex-shrink-0 ${
+      className={`min-h-screen sticky top-0 bg-slate-800 text-white p-4 transition-all duration-300 ease-in-out flex flex-col justify-between flex-shrink-0 ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >
@@ -59,6 +58,13 @@ const Sidebar = () => {
             label="Formato"
             isCollapsed={isCollapsed}
             icon={<FileText />}
+          />
+          {/* Añadir nuevo enlace a Disponibilidad */}
+          <SidebarItem
+            to="/disponibilidad"
+            label="Disponibilidad"
+            isCollapsed={isCollapsed}
+            icon={<PackageCheck />}
           />
         </nav>
       </div>
