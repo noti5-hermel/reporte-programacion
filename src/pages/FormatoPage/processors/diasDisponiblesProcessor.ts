@@ -1,37 +1,90 @@
 /**
  * @file diasDisponiblesProcessor.ts
- * @description Contiene la lógica para procesar un archivo Excel con los días y horas disponibles.
+ * @description Contiene la lógica para procesar un reporte de inventario de dos filas por producto
+ * y transformarlo en un reporte consolidado de días disponibles.
  */
 
 /**
- * Procesa las filas de un archivo Excel para generar un reporte de días disponibles.
+ * Procesa un Excel de inventario, consolidando dos filas por producto en una sola y calculando los días disponibles.
  * 
- * @param {any[][]} excelRows - Las filas de la tabla parseadas del archivo Excel.
- * @returns {Array<Array<string | number>>} Los datos listos para ser convertidos a otra hoja de Excel.
+ * @param {any[][]} excelRows - Las filas parseadas del archivo Excel de inventario.
+ * @returns {Array<Array<string | number>>} Los datos consolidados listos para el nuevo reporte.
  */
 export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][] => {
-  // Valida que el archivo tenga al menos una fila de cabecera y una de datos.
-  if (!excelRows || excelRows.length < 2) {
-    return [['Error'], ['El archivo Excel no contiene datos suficientes o está vacío.']];
+  if (!excelRows || excelRows.length < 3) {
+    return [['Error'], ['El archivo de inventario no contiene datos suficientes.']];
   }
 
-  // Asume que la primera fila es la cabecera y el resto son datos.
-  const header = excelRows[0].map(cell => String(cell).trim());
-  const data = excelRows.slice(1).map(row => {
-    // Se asegura de que cada fila tenga el formato esperado.
-    const day = row[0] ? String(row[0]).trim() : '';
-    const availableHours = row[1] ? Number(row[1]) : 0;
-    // Ignora filas que no tengan un día especificado.
-    return day ? [day, availableHours] : null;
-  }).filter(row => row !== null) as (string | number)[][]; // Filtra las filas nulas.
+  // 1. Buscar inteligentemente la cabecera del archivo de entrada
+  const headerRowIndex = excelRows.findIndex(row => 
+    row.some(cell => String(cell).trim() === "Product Number")
+  );
 
-  if (data.length === 0) {
-    return [
-      header,
-      ['No se encontraron filas con datos válidos en el archivo.', '']
-    ];
+  if (headerRowIndex === -1) {
+    return [['Error'], ['No se encontró la cabecera "Product Number" en el archivo.']];
   }
 
-  // Devuelve la cabecera original junto con los datos limpios.
-  return [header, ...data];
+  const sourceHeader = excelRows[headerRowIndex].map(cell => String(cell).trim());
+  const dataRows = excelRows.slice(headerRowIndex + 1);
+
+  // 2. Encontrar los índices de las columnas que necesitamos del archivo de origen
+  const productNumberIndex = sourceHeader.indexOf("Product Number");
+  const availableIndex = sourceHeader.indexOf("Available");
+  const minimumIndex = sourceHeader.indexOf("Minimum");
+  const reorderIndex = sourceHeader.indexOf("Reorder");
+
+  // La columna "Product Number" en la cabecera es la columna A en los datos, por lo que su índice es 0.
+  // Sin embargo, para flexibilidad, lo buscamos dinámicamente.
+  if ([productNumberIndex, availableIndex, minimumIndex, reorderIndex].includes(-1)) {
+    return [['Error'], ['Faltan columnas requeridas en el archivo: "Product Number", "Available", "Minimum", o "Reorder".']];
+  }
+
+  const processedData: (string | number)[][] = [];
+
+  // 3. Procesar las filas en pares (una para datos principales, otra para descripción)
+  for (let i = 0; i < dataRows.length; i += 2) {
+    const mainRow = dataRows[i];
+    const descriptionRow = dataRows[i + 1];
+
+    if (!descriptionRow) continue; // Si no hay una segunda fila para el par, se ignora.
+
+    // El código es la columna A (índice `productNumberIndex`) de la primera fila.
+    const codigo = mainRow[productNumberIndex] ? String(mainRow[productNumberIndex]).trim() : '';
+    // La descripción es la columna A (índice 0) de la segunda fila del par.
+    const descripcion = descriptionRow[0] ? String(descriptionRow[0]).trim() : '';
+    
+    const disponible = mainRow[availableIndex] ? Number(mainRow[availableIndex]) : 0;
+    const minimo = mainRow[minimumIndex] ? Number(mainRow[minimumIndex]) : 0;
+    const reorder = mainRow[reorderIndex] ? Number(mainRow[reorderIndex]) : 0;
+
+    // 4. Calcular los días disponibles
+    let diasDisponibles: number | string = 0;
+    if (reorder > 0) {
+      const consumoDiario = reorder / 30;
+      diasDisponibles = consumoDiario > 0 ? Math.floor(disponible / consumoDiario) : 'Inf';
+    } else {
+      diasDisponibles = 'N/A'; // No se puede calcular si no hay consumo/reorder
+    }
+    
+    // Solo se añade la fila si tiene un código de producto.
+    if (codigo) {
+      processedData.push([
+        codigo,
+        descripcion,
+        disponible,
+        minimo,
+        reorder,
+        diasDisponibles
+      ]);
+    }
+  }
+
+  // 5. Devolver los datos con la nueva cabecera del reporte final
+  const finalHeader = ['CODIGO', 'DESCRIPCION', 'DISPONIBLE', 'MINIMO', 'REORDER', 'DIAS DISPONIBLES'];
+  
+  if (processedData.length === 0) {
+    return [finalHeader, ['No se encontraron datos de productos válidos.']];
+  }
+
+  return [finalHeader, ...processedData];
 };
