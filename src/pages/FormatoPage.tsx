@@ -1,7 +1,8 @@
 import { useState, type ChangeEvent, type FC } from 'react';
 import * as XLSX from 'xlsx';
-import { Select } from '../../components/Select';
+import { Select } from '../components/Select';
 import { processManoDeObra } from './FormatoPage/processors/manoDeObraProcessor';
+import { processDiasDisponibles } from './FormatoPage/processors/diasDisponiblesProcessor';
 
 /**
  * Componente `FormatoPage`
@@ -21,6 +22,7 @@ const FormatoPage: FC = () => {
   const formatOptions = [
     { value: 'manoDeObra', label: 'Formato Mano de Obra (Detallado)' },
     { value: 'resumen', label: 'Formato de Resumen (por Grupo)' },
+    { value: 'diasDisponibles', label: 'Formato Días Disponibles' },
   ];
 
   /**
@@ -102,6 +104,11 @@ const FormatoPage: FC = () => {
               dataForExcel.push([group, count]);
             });
             fileName = 'reporte_resumen.xlsx';
+            break;
+
+          case 'diasDisponibles':
+            dataForExcel = processDiasDisponibles(tableRows);
+            fileName = 'reporte_dias_disponibles.xlsx';
             break;
 
           default:
