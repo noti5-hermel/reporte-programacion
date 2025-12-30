@@ -11,14 +11,14 @@
  * @returns {Array<Array<string | number>>} Los datos consolidados listos para el nuevo reporte.
  */
 export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][] => {
-  // 1. Iniciar la lectura desde la fila 2 (índice 1), ignorando la primera fila por completo.
+  // 1. Iniciar la lectura desde la fila 2 (índice 1).
   const relevantRows = excelRows.slice(1);
 
   if (!relevantRows || relevantRows.length < 2) {
     return [['Error'], ['El archivo no contiene suficientes datos a partir de la segunda fila.']];
   }
 
-  // 2. Buscar la cabecera en las filas relevantes usando "Description" como ancla.
+  // 2. Buscar la cabecera usando "Description" como ancla.
   const headerRowIndex = relevantRows.findIndex(row => 
     row.some(cell => String(cell).trim() === "Description")
   );
@@ -28,17 +28,16 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
   }
 
   const sourceHeader = relevantRows[headerRowIndex].map(cell => String(cell).trim());
-  // Los datos reales comienzan después de la cabecera encontrada.
   const dataRows = relevantRows.slice(headerRowIndex + 1);
 
-  // 3. Encontrar los índices de las columnas necesarias. "Product Number" ya no se busca.
+  // 3. Encontrar los índices de las columnas necesarias.
   const descriptionIndex = sourceHeader.indexOf("Description");
   const availableIndex = sourceHeader.indexOf("Available");
   const minimumIndex = sourceHeader.indexOf("Minimum");
-  const reorderIndex = sourceHeader.indexOf("Reorder");
+  const reorderIndex = sourceHeader.indexOf("Reorder"); // Todavía se necesita para la fila de salida
 
   if ([descriptionIndex, availableIndex, minimumIndex, reorderIndex].includes(-1)) {
-    return [['Error'], ['Faltan columnas requeridas en el archivo: "Description", "Available", "Minimum", o "Reorder".']];
+    return [['Error'], ['Faltan columnas requeridas: "Description", "Available", "Minimum", o "Reorder".']];
   }
 
   const processedData: (string | number)[][] = [];
@@ -48,24 +47,35 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     const mainRow = dataRows[i];
     const nameRow = dataRows[i + 1];
 
-    if (!nameRow) continue; // Si no hay una segunda fila para el par, se detiene.
+    if (!nameRow) continue;
 
-    // El CÓDIGO se toma de la columna "Description" de la primera fila del par.
     const codigo = mainRow[descriptionIndex] ? String(mainRow[descriptionIndex]).trim() : '';
-    // La DESCRIPCIÓN se toma de la columna "Description" de la segunda fila del par.
     const descripcion = nameRow[descriptionIndex] ? String(nameRow[descriptionIndex]).trim() : '';
     
     const disponible = mainRow[availableIndex] ? Number(mainRow[availableIndex]) : 0;
     const minimo = mainRow[minimumIndex] ? Number(mainRow[minimumIndex]) : 0;
     const reorder = mainRow[reorderIndex] ? Number(mainRow[reorderIndex]) : 0;
 
-    let diasDisponibles: number | string = 0;
-    if (reorder > 0) {
-      const consumoDiario = reorder / 30;
-      diasDisponibles = consumoDiario > 0 ? Math.floor(disponible / consumoDiario) : 'Inf';
+    // --- INICIO DE LA NUEVA LÓGICA DE CÁLCULO ---
+    let diasDisponibles: number | string;
+    if (minimo > 0) {
+      // Normalizar la descripción para la verificación.
+      const normalizedDesc = descripcion.trim().toUpperCase();
+      
+      if (normalizedDesc.endsWith('X')) {
+        // Si termina en 'X', se multiplica por 15.
+        diasDisponibles = (disponible / minimo) * 15;
+      } else {
+        // Si no, se multiplica por 30.
+        diasDisponibles = (disponible / minimo) * 30;
+      }
+      // Redondear el resultado al entero más cercano.
+      diasDisponibles = Math.round(diasDisponibles);
     } else {
+      // Si el mínimo es 0, no se puede calcular.
       diasDisponibles = 'N/A';
     }
+    // --- FIN DE LA NUEVA LÓGICA DE CÁLCULO ---
     
     if (codigo) {
       processedData.push([
