@@ -11,50 +11,54 @@
  * @returns {Array<Array<string | number>>} Los datos consolidados listos para el nuevo reporte.
  */
 export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][] => {
-  if (!excelRows || excelRows.length < 3) {
-    return [['Error'], ['El archivo de inventario no contiene datos suficientes.']];
+  // 1. Iniciar la lectura desde la fila 2 (índice 1), ignorando la primera fila por completo.
+  const relevantRows = excelRows.slice(1);
+
+  if (!relevantRows || relevantRows.length < 2) {
+    return [['Error'], ['El archivo no contiene suficientes datos a partir de la segunda fila.']];
   }
 
-  // 1. Buscar inteligentemente la cabecera usando "Description" como ancla, según lo solicitado.
-  const headerRowIndex = excelRows.findIndex(row => 
+  // 2. Buscar la cabecera en las filas relevantes usando "Description" como ancla.
+  const headerRowIndex = relevantRows.findIndex(row => 
     row.some(cell => String(cell).trim() === "Description")
   );
 
   if (headerRowIndex === -1) {
-    return [['Error'], ['No se encontró la cabecera "Description" en el archivo. Por favor, verifica el formato.']];
+    return [['Error'], ['No se encontró la cabecera "Description" a partir de la segunda fila.']];
   }
 
-  const sourceHeader = excelRows[headerRowIndex].map(cell => String(cell).trim());
-  const dataRows = excelRows.slice(headerRowIndex + 1);
+  const sourceHeader = relevantRows[headerRowIndex].map(cell => String(cell).trim());
+  // Los datos reales comienzan después de la cabecera encontrada.
+  const dataRows = relevantRows.slice(headerRowIndex + 1);
 
-  // 2. Encontrar los índices de las columnas que necesitamos del archivo de origen.
-  // Aunque buscamos por "Description", todavía necesitamos "Product Number" para el código.
-  const productNumberIndex = sourceHeader.indexOf("Product Number");
+  // 3. Encontrar los índices de las columnas necesarias. "Product Number" ya no se busca.
+  const descriptionIndex = sourceHeader.indexOf("Description");
   const availableIndex = sourceHeader.indexOf("Available");
   const minimumIndex = sourceHeader.indexOf("Minimum");
   const reorderIndex = sourceHeader.indexOf("Reorder");
 
-  if ([productNumberIndex, availableIndex, minimumIndex, reorderIndex].includes(-1)) {
-    return [['Error'], ['Faltan columnas requeridas en el archivo: "Product Number", "Description", "Available", "Minimum", o "Reorder".']];
+  if ([descriptionIndex, availableIndex, minimumIndex, reorderIndex].includes(-1)) {
+    return [['Error'], ['Faltan columnas requeridas en el archivo: "Description", "Available", "Minimum", o "Reorder".']];
   }
 
   const processedData: (string | number)[][] = [];
 
-  // 3. Procesar las filas en pares
+  // 4. Procesar las filas en pares.
   for (let i = 0; i < dataRows.length; i += 2) {
     const mainRow = dataRows[i];
-    const descriptionRow = dataRows[i + 1];
+    const nameRow = dataRows[i + 1];
 
-    if (!descriptionRow) continue;
+    if (!nameRow) continue; // Si no hay una segunda fila para el par, se detiene.
 
-    const codigo = mainRow[productNumberIndex] ? String(mainRow[productNumberIndex]).trim() : '';
-    const descripcion = descriptionRow[0] ? String(descriptionRow[0]).trim() : '';
+    // El CÓDIGO se toma de la columna "Description" de la primera fila del par.
+    const codigo = mainRow[descriptionIndex] ? String(mainRow[descriptionIndex]).trim() : '';
+    // La DESCRIPCIÓN se toma de la columna "Description" de la segunda fila del par.
+    const descripcion = nameRow[descriptionIndex] ? String(nameRow[descriptionIndex]).trim() : '';
     
     const disponible = mainRow[availableIndex] ? Number(mainRow[availableIndex]) : 0;
     const minimo = mainRow[minimumIndex] ? Number(mainRow[minimumIndex]) : 0;
     const reorder = mainRow[reorderIndex] ? Number(mainRow[reorderIndex]) : 0;
 
-    // 4. Calcular los días disponibles
     let diasDisponibles: number | string = 0;
     if (reorder > 0) {
       const consumoDiario = reorder / 30;
@@ -75,11 +79,11 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     }
   }
 
-  // 5. Devolver los datos con la nueva cabecera del reporte final
+  // 5. Devolver los datos con la cabecera del reporte final.
   const finalHeader = ['CODIGO', 'DESCRIPCION', 'DISPONIBLE', 'MINIMO', 'REORDER', 'DIAS DISPONIBLES'];
   
   if (processedData.length === 0) {
-    return [finalHeader, ['No se encontraron datos de productos válidos.']];
+    return [finalHeader, ['No se encontraron datos de productos válidos para procesar.']];
   }
 
   return [finalHeader, ...processedData];
