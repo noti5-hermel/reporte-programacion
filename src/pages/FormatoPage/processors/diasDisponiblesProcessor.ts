@@ -34,7 +34,7 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
   const descriptionIndex = sourceHeader.indexOf("Description");
   const availableIndex = sourceHeader.indexOf("Available");
   const minimumIndex = sourceHeader.indexOf("Minimum");
-  const reorderIndex = sourceHeader.indexOf("Reorder"); // Todavía se necesita para la fila de salida
+  const reorderIndex = sourceHeader.indexOf("Reorder");
 
   if ([descriptionIndex, availableIndex, minimumIndex, reorderIndex].includes(-1)) {
     return [['Error'], ['Faltan columnas requeridas: "Description", "Available", "Minimum", o "Reorder".']];
@@ -56,26 +56,19 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     const minimo = mainRow[minimumIndex] ? Number(mainRow[minimumIndex]) : 0;
     const reorder = mainRow[reorderIndex] ? Number(mainRow[reorderIndex]) : 0;
 
-    // --- INICIO DE LA NUEVA LÓGICA DE CÁLCULO ---
+    // --- Lógica de cálculo para Días Disponibles ---
     let diasDisponibles: number | string;
     if (minimo > 0) {
-      // Normalizar la descripción para la verificación.
       const normalizedDesc = descripcion.trim().toUpperCase();
-      
       if (normalizedDesc.endsWith('X')) {
-        // Si termina en 'X', se multiplica por 15.
         diasDisponibles = (disponible / minimo) * 15;
       } else {
-        // Si no, se multiplica por 30.
         diasDisponibles = (disponible / minimo) * 30;
       }
-      // Redondear el resultado al entero más cercano.
       diasDisponibles = Math.round(diasDisponibles);
     } else {
-      // Si el mínimo es 0, no se puede calcular.
       diasDisponibles = 'N/A';
     }
-    // --- FIN DE LA NUEVA LÓGICA DE CÁLCULO ---
     
     if (codigo) {
       processedData.push([
@@ -89,7 +82,30 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     }
   }
 
-  // 5. Devolver los datos con la cabecera del reporte final.
+  // 5. Ordenar los datos procesados.
+  processedData.sort((a, b) => {
+    // Indices: 1 = DESCRIPCION, 5 = DIAS DISPONIBLES
+    const descA = String(a[1]).toLowerCase();
+    const descB = String(b[1]).toLowerCase();
+    const diasA = a[5];
+    const diasB = b[5];
+
+    // Ordenamiento secundario (agrupación): por descripción alfabética.
+    const descCompare = descA.localeCompare(descB);
+    if (descCompare !== 0) {
+      return descCompare;
+    }
+
+    // Ordenamiento primario: por días disponibles (menor a mayor).
+    // Los valores 'N/A' se consideran mayores que cualquier número y van al final.
+    if (diasA === 'N/A' && diasB !== 'N/A') return 1;
+    if (diasA !== 'N/A' && diasB === 'N/A') return -1;
+    if (diasA === 'N/A' && diasB === 'N/A') return 0; // Si ambos son N/A, se mantiene el orden por descripción.
+
+    return Number(diasA) - Number(diasB);
+  });
+  
+  // 6. Devolver los datos con la cabecera del reporte final.
   const finalHeader = ['CODIGO', 'DESCRIPCION', 'DISPONIBLE', 'MINIMO', 'REORDER', 'DIAS DISPONIBLES'];
   
   if (processedData.length === 0) {
