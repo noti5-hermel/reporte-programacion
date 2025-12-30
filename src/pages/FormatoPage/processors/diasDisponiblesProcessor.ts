@@ -15,42 +15,39 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     return [['Error'], ['El archivo de inventario no contiene datos suficientes.']];
   }
 
-  // 1. Buscar inteligentemente la cabecera del archivo de entrada
+  // 1. Buscar inteligentemente la cabecera usando "Description" como ancla, según lo solicitado.
   const headerRowIndex = excelRows.findIndex(row => 
-    row.some(cell => String(cell).trim() === "Product Number")
+    row.some(cell => String(cell).trim() === "Description")
   );
 
   if (headerRowIndex === -1) {
-    return [['Error'], ['No se encontró la cabecera "Product Number" en el archivo.']];
+    return [['Error'], ['No se encontró la cabecera "Description" en el archivo. Por favor, verifica el formato.']];
   }
 
   const sourceHeader = excelRows[headerRowIndex].map(cell => String(cell).trim());
   const dataRows = excelRows.slice(headerRowIndex + 1);
 
-  // 2. Encontrar los índices de las columnas que necesitamos del archivo de origen
+  // 2. Encontrar los índices de las columnas que necesitamos del archivo de origen.
+  // Aunque buscamos por "Description", todavía necesitamos "Product Number" para el código.
   const productNumberIndex = sourceHeader.indexOf("Product Number");
   const availableIndex = sourceHeader.indexOf("Available");
   const minimumIndex = sourceHeader.indexOf("Minimum");
   const reorderIndex = sourceHeader.indexOf("Reorder");
 
-  // La columna "Product Number" en la cabecera es la columna A en los datos, por lo que su índice es 0.
-  // Sin embargo, para flexibilidad, lo buscamos dinámicamente.
   if ([productNumberIndex, availableIndex, minimumIndex, reorderIndex].includes(-1)) {
-    return [['Error'], ['Faltan columnas requeridas en el archivo: "Product Number", "Available", "Minimum", o "Reorder".']];
+    return [['Error'], ['Faltan columnas requeridas en el archivo: "Product Number", "Description", "Available", "Minimum", o "Reorder".']];
   }
 
   const processedData: (string | number)[][] = [];
 
-  // 3. Procesar las filas en pares (una para datos principales, otra para descripción)
+  // 3. Procesar las filas en pares
   for (let i = 0; i < dataRows.length; i += 2) {
     const mainRow = dataRows[i];
     const descriptionRow = dataRows[i + 1];
 
-    if (!descriptionRow) continue; // Si no hay una segunda fila para el par, se ignora.
+    if (!descriptionRow) continue;
 
-    // El código es la columna A (índice `productNumberIndex`) de la primera fila.
     const codigo = mainRow[productNumberIndex] ? String(mainRow[productNumberIndex]).trim() : '';
-    // La descripción es la columna A (índice 0) de la segunda fila del par.
     const descripcion = descriptionRow[0] ? String(descriptionRow[0]).trim() : '';
     
     const disponible = mainRow[availableIndex] ? Number(mainRow[availableIndex]) : 0;
@@ -63,10 +60,9 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
       const consumoDiario = reorder / 30;
       diasDisponibles = consumoDiario > 0 ? Math.floor(disponible / consumoDiario) : 'Inf';
     } else {
-      diasDisponibles = 'N/A'; // No se puede calcular si no hay consumo/reorder
+      diasDisponibles = 'N/A';
     }
     
-    // Solo se añade la fila si tiene un código de producto.
     if (codigo) {
       processedData.push([
         codigo,
