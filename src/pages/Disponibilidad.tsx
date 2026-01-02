@@ -5,6 +5,10 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 import type { ColDef } from 'ag-grid-community';
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { API_BASE_URL } from "../api/config";
+import { ModuleRegistry } from 'ag-grid-community';
+import { ClientSideRowModelModule } from 'ag-grid-community';
+
+ModuleRegistry.registerModules([ ClientSideRowModelModule ]);
 
 /**
  * Componente `DisponibilidadPage`
@@ -21,7 +25,7 @@ const DisponibilidadPage = () => {
 
   /**
    * Definición de las columnas para AG Grid.
-   * Cada objeto define una columna de la tabla (cabecera, campo de datos, etc.).
+   * La propiedad 'field' debe coincidir EXACTAMENTE con la clave del JSON de la API.
    */
   const columnDefs: ColDef[] = [
     { headerName: "Código", field: "codigo", sortable: true, filter: true },
@@ -58,8 +62,6 @@ const DisponibilidadPage = () => {
     fetchData();
   }, []);
 
-  // AG Grid maneja su propio filtrado, pero mantenemos este para el SearchBar externo.
-  // Cuando se busca en el SearchBar, AG Grid filtrará automáticamente.
   const onSearchQueryChanged = (value: string) => {
     setSearchQuery(value);
   };
@@ -87,7 +89,7 @@ const DisponibilidadPage = () => {
             quickFilterText={searchQuery}
             defaultColDef={{
               resizable: true,
-              flex: 1, // Hace que las columnas se ajusten al ancho disponible
+              flex: 1,
             }}
           />
         </div>
