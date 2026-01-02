@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
-import { DataTable } from "../../components/Table";
-import { SearchBar } from "../../components/SearchBar";
-import { API_BASE_URL } from "../../api/config";
+import { DataTable } from "../components/Table";
+import { SearchBar } from "../components/SearchBar/SearchBar";
+import { API_BASE_URL } from "../api/config";
 
 /**
  * Componente `DisponibilidadPage`

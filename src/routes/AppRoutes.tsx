@@ -4,7 +4,7 @@ import General from "../pages/General";
 import Resumen from "../pages/Resumen";
 import Login  from "../pages/Login/LoginPage";
 import Comparacion from "../pages/Comparacion";
-import FormatoPage from "../pages/FormatoPage/index"; 
+import FormatoPage from "../pages/FormatoPage"; 
 import DisponibilidadPage from "../pages/Disponibilidad"; // Importar la nueva página
 import PrivateRoute from "./PrivateRoute";
 import { useAuth } from "../contexts/AuthContext";

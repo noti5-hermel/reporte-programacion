@@ -73,7 +73,7 @@ const FormatoPage: FC = () => {
               cells.sort((a, b) => a.left - b.left);
               return cells;
           });
-          const headerRowIndex = sortedRows.findIndex(row => row.some(cell => cell.text.trim().startsWith('Componen')));
+          const headerRowIndex = sortedRows.findIndex(row => row.some(cell => cell.text.trim().startsWith('Description')));
           if (headerRowIndex === -1) {
             throw new Error('No se pudo encontrar la cabecera "Componen" en el archivo HTM.');
           }
