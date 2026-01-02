@@ -1,35 +1,50 @@
-import { useState, useMemo, useEffect } from "react";
-import { DataTable } from "../components/Table";
-import { SearchBar } from "../components/SearchBar/SearchBar";
-import { API_BASE_URL } from "../api/config";
+import { useState, useEffect } from "react";
+import { AgGridReact } from 'ag-grid-react';
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import { ColDef } from 'ag-grid-community';
+import { SearchBar } from "../../components/SearchBar";
+import { API_BASE_URL } from "../../api/config";
 
 /**
  * Componente `DisponibilidadPage`
  * 
- * Muestra una tabla con los datos de disponibilidad de inventario,
- * obtenidos de un endpoint de la API. Permite la búsqueda y filtrado de datos.
+ * Muestra una tabla interactiva con los datos de disponibilidad de inventario
+ * utilizando la librería AG Grid. Los datos son cargados desde un endpoint de la API.
  */
 const DisponibilidadPage = () => {
   // --- ESTADOS DEL COMPONENTE ---
-  const [data, setData] = useState<any[]>([]);
+  const [rowData, setRowData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
+  /**
+   * Definición de las columnas para AG Grid.
+   * Cada objeto define una columna de la tabla (cabecera, campo de datos, etc.).
+   */
+  const columnDefs: ColDef[] = [
+    { headerName: "Código", field: "codigo", sortable: true, filter: true },
+    { headerName: "Descripción", field: "descripcion", sortable: true, filter: true },
+    { headerName: "Disponible", field: "disponible", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Mínimo", field: "minimo", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Reorder", field: "reorder", sortable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Días Disponibles", field: "dias_disponibles", sortable: true, filter: 'agNumberColumnFilter' }
+  ];
+
   // Efecto para cargar los datos desde la API al montar el componente.
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        // Asume un nuevo endpoint para los datos de disponibilidad.
-        const response = await fetch(`${API_BASE_URL}/api/v1/reports/disponibilidad`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/available/`, {
           headers: { "Authorization": `Bearer ${token}` },
         });
 
         if (response.ok) {
           const result = await response.json();
-          // Se asume que la API devuelve los datos en el formato correcto.
-          setData(Array.isArray(result) ? result : []);
+          setRowData(Array.isArray(result) ? result : []);
         } else {
           setError("No se pudieron cargar los datos de disponibilidad.");
         }
@@ -43,15 +58,11 @@ const DisponibilidadPage = () => {
     fetchData();
   }, []);
 
-  // `useMemo` para filtrar los datos por búsqueda de forma eficiente.
-  const filteredData = useMemo(() => {
-    if (!searchQuery) return data;
-    return data.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [data, searchQuery]);
+  // AG Grid maneja su propio filtrado, pero mantenemos este para el SearchBar externo.
+  // Cuando se busca en el SearchBar, AG Grid filtrará automáticamente.
+  const onSearchQueryChanged = (value: string) => {
+    setSearchQuery(value);
+  };
 
   // --- RENDERIZADO DEL COMPONENTE ---
   return (
@@ -59,7 +70,7 @@ const DisponibilidadPage = () => {
       <h1 className="text-xl font-bold">Reporte de Disponibilidad de Inventario</h1>
       
       <div className="flex items-center">
-        <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <SearchBar searchQuery={searchQuery} onSearchChange={onSearchQueryChanged} />
       </div>
 
       {loading ? (
@@ -67,7 +78,19 @@ const DisponibilidadPage = () => {
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : (
-        <DataTable type="disponibilidad" data={filteredData} />
+        <div className="ag-theme-alpine" style={{ height: '600px', width: '100%' }}>
+          <AgGridReact
+            rowData={rowData}
+            columnDefs={columnDefs}
+            pagination={true}
+            paginationPageSize={20}
+            quickFilterText={searchQuery}
+            defaultColDef={{
+              resizable: true,
+              flex: 1, // Hace que las columnas se ajusten al ancho disponible
+            }}
+          />
+        </div>
       )}
     </div>
   );
