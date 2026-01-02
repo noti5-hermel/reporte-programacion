@@ -158,7 +158,15 @@ const DisponibilidadPage = () => {
         );
 
         if (!res.ok) throw new Error();
+
+        // ***** LA SOLUCIÓN *****
+        // Después de un guardado exitoso, forzamos a la fila a redibujarse.
+        // Esto hará que AG Grid vuelva a ejecutar `getRowStyle` para esta fila específica,
+        // aplicando el nuevo color de fondo.
+        event.api.redrawRows({ rowNodes: [event.node] });
+
       } catch {
+        // Si la API falla, revertimos el cambio visual en la tabla.
         event.node.setDataValue(event.colDef.field!, event.oldValue);
         alert("Error al guardar el cambio");
       }
