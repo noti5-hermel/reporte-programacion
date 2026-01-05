@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+// Se elimina 'import React' porque ya no es necesario en las versiones modernas.
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import type { ICellEditorParams } from 'ag-grid-community';
 
 /**
@@ -30,11 +31,7 @@ const ColorPickerEditor = forwardRef((props: ICellEditorParams, ref) => {
       type="color"
       value={value}
       onChange={(e) => setValue(e.target.value)}
-      // --- INICIO DE LA CORRECCIÓN ---
-      // Llama a stopEditing() cuando el selector de color se cierra (pierde el foco).
-      // Esto le notifica a AG Grid que la edición ha finalizado y que debe tomar el nuevo valor.
       onBlur={() => props.stopEditing()}
-      // --- FIN DE LA CORRECCIÓN ---
       style={{ width: '100%', height: '100%', padding: 0, border: 'none' }}
     />
   );

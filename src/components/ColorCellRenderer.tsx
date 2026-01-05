@@ -1,5 +1,5 @@
+// Se elimina 'import React' porque ya no es necesario en las versiones modernas.
 
-import React from 'react';
 import type { ICellRendererParams } from 'ag-grid-community';
 
 /**
@@ -7,7 +7,6 @@ import type { ICellRendererParams } from 'ag-grid-community';
  * Muestra un pequeño cuadro de color y el código hexadecimal.
  */
 const ColorCellRenderer = (props: ICellRendererParams) => {
-  // Si no hay valor, no se muestra nada.
   if (!props.value) {
     return null;
   }

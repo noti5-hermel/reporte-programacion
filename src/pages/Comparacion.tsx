@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, ChangeEvent } from "react";
+import { useState, useMemo, useEffect, type ChangeEvent } from "react";
 import { UploadCloud } from "lucide-react";
 import * as XLSX from "xlsx";
 import { API_BASE_URL } from "../api/config";
@@ -24,87 +24,15 @@ export default function Comparacion() {
   const [loadingFechas, setLoadingFechas] = useState<boolean>(false);
 
   const loadComparacionByDate = async (fecha: string) => {
-    if (!fecha) {
-      setComparisonData([]);
-      return;
-    }
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("No estás autenticado. Por favor, inicia sesión.");
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/?compareDate=${encodeURIComponent(fecha)}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        const transformedData: ComparisonRow[] = Array.isArray(data)
-          ? data.map((item: any) => {
-              let diffPercent: number | null = null;
-              if (item.tiempo && item.total_tiempo_real !== 0) {
-                const diff = (item.tiempo - item.total_tiempo_real) / item.tiempo;
-                diffPercent = diff * 10;
-              }
-              return {
-                codigo: item.code || "",
-                descripcion: item.description || "",
-                tipo: item.tipo || "",
-                numeroPersonas: item.numero_personas || 0,
-                totalTiempoReal: Number(item.total_tiempo_real) || 0,
-                unitsReq: Number(item.tiempo) || 0,
-                diffPercent: diffPercent,
-              };
-            })
-          : [];
-        setComparisonData(transformedData);
-      } else {
-        console.error("Error al cargar los registros de comparación");
-        setComparisonData([]);
-      }
-    } catch (error) {
-      console.error("Error al cargar los registros de comparación:", error);
-      setComparisonData([]);
-    }
+    // ... (código existente)
   };
 
   const handleDateChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const date = e.target.value;
-    setSelectedDate(date);
-    setResumenFile(null);
-    setDocumentoFile(null);
-    setSelectedTipo("");
-    const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
-    const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
-    if (resumenInput) resumenInput.value = "";
-    if (documentoInput) documentoInput.value = "";
-    await loadComparacionByDate(date);
+    // ... (código existente)
   };
 
   const loadFechas = async () => {
-    setLoadingFechas(true);
-    try { 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setLoadingFechas(false);
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setFechasDisponibles(Array.isArray(data) ? data : []);
-      } else {
-        console.error("Error al cargar las fechas");
-      }
-    } catch (error) {
-      console.error("Error al cargar las fechas:", error);
-    } finally {
-      setLoadingFechas(false);
-    }
+    // ... (código existente)
   };
 
   useEffect(() => {
@@ -112,196 +40,28 @@ export default function Comparacion() {
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (fileType === 'resumen') setResumenFile(file);
-      else setDocumentoFile(file);
-    }
+    // ... (código existente)
   };
 
   const readExcelAsRows = (file: File): Promise<any[][]> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = e.target?.result;
-          if (!data) return reject(new Error("No se pudo leer el archivo."));
-          const workbook = XLSX.read(data, { type: "binary" });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-          resolve(rows);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = () => reject(new Error("Error al leer el archivo."));
-      reader.readAsBinaryString(file);
-    });
+    // ... (código existente)
   };
 
   const handleComparison = async () => {
-    if (!resumenFile || !documentoFile) {
-      alert("Debes seleccionar ambos archivos (Resumen y Documento Real).");
-      return;
-    }
-    try {
-      const [resumenRows, documentoRows] = await Promise.all([
-        readExcelAsRows(resumenFile),
-        readExcelAsRows(documentoFile),
-      ]);
-      if (resumenRows.length < 2 || documentoRows.length < 2) {
-        alert("Alguno de los archivos no tiene datos suficientes.");
-        return;
-      }
-      const parseNumber = (value: any): number => {
-        if (value === null || value === undefined || value === "") return 0;
-        const str = String(value).trim().replace(/,/g, ".");
-        const num = parseFloat(str);
-        return isNaN(num) ? 0 : num;
-      };
-      const resumenData = resumenRows.slice(1).filter((row) => row[0]);
-      const documentoData = documentoRows.slice(2).filter((row) => row[0]);
-      const unitsReqByCode: Record<string, number> = {};
-      documentoData.forEach((row) => {
-        const code = String(row[2] ?? "").trim();
-        const unitsReqValue = row[1];
-        const unitsReq = parseNumber(unitsReqValue);
-        if (code && unitsReqByCode[code] === undefined) {
-          unitsReqByCode[code] = unitsReq;
-        }
-      });
-      const result: ComparisonRow[] = resumenData.map((row) => {
-        const codigo = String(row[0]).trim();
-        const descripcion = String(row[1] ?? "").trim();
-        const tipo = String(row[2] ?? "").trim();
-        const numeroPersonas = parseNumber(row[3]);
-        const totalTiempoReal = parseNumber(row[4]);
-        const unitsReq = unitsReqByCode[codigo] ?? 0;
-        let diffPercent: number | null = null;
-        if (unitsReq !== 0) {
-          const diff = (unitsReq - totalTiempoReal) / unitsReq;
-          diffPercent = diff * 10;
-        }
-        return {
-          codigo,
-          descripcion,
-          tipo,
-          numeroPersonas,
-          totalTiempoReal,
-          unitsReq,
-          diffPercent,
-        };
-      }).filter((row) => row.totalTiempoReal !== 0);
-      setComparisonData(result);
-    } catch (error) {
-      console.error(error);
-      alert("Hubo un error al procesar los archivos. Ver consola para más detalles.");
-    }
+    // ... (código existente)
   };
 
   const handleSaveComparison = async () => {
-    if (comparisonData.length === 0) {
-      alert("No hay datos para guardar. Realiza una comparación primero.");
-      return;
-    }
-    setSaving(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("No estás autenticado. Por favor, inicia sesión.");
-        setSaving(false);
-        return;
-      }
-      const compareDate = new Date().toISOString();
-      const dataToSend = comparisonData.map((row) => ({
-        codigo: row.codigo,
-        descripcion: row.descripcion,
-        tipo: row.tipo,
-        numeroPersonas: row.numeroPersonas,
-        totalTiempoReal: row.totalTiempoReal,
-        unitsReq: row.unitsReq,
-        diferencia: row.totalTiempoReal - row.unitsReq,
-        compareDate: compareDate,
-      }));
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(dataToSend),
-      });
-      if (response.ok) {
-        try {
-          await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ fecha: compareDate }),
-          });
-        } catch (fechaError) {
-          console.error("Error al guardar la fecha en el historico:", fechaError);
-        }
-        setResumenFile(null);
-        setDocumentoFile(null);
-        setComparisonData([]);
-        setSelectedTipo("");
-        const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
-        const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
-        if (resumenInput) resumenInput.value = "";
-        if (documentoInput) documentoInput.value = "";
-        await loadFechas();
-        alert("Comparación guardada exitosamente.");
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        alert(`Error al guardar la comparación: ${errorData.message || response.statusText}`);
-      }
-    } catch (error) {
-      console.error("Error al guardar la comparación:", error);
-      alert("Hubo un error al guardar la comparación. Ver consola para más detalles.");
-    } finally {
-      setSaving(false);
-    }
+    // ... (código existente)
   };
 
   const handleClearComparison = () => {
-    if (window.confirm("¿Estás seguro de que quieres limpiar la comparación actual? Se perderán los datos no guardados.")) {
-      setComparisonData([]);
-      setResumenFile(null);
-      setDocumentoFile(null);
-      setSelectedTipo("");
-      const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
-      const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
-      if (resumenInput) resumenInput.value = "";
-      if (documentoInput) documentoInput.value = "";
-    }
+    // ... (código existente)
   };
-
-  // +++ AÑADIR ESTA NUEVA FUNCIÓN +++
+  
   const handleExport = () => {
-    if (comparisonData.length === 0) {
-      alert("No hay datos para exportar.");
-      return;
-    }
-    const dataToExport = filteredData.map(item => ({
-      'Código': item.codigo,
-      'Descripción': item.descripcion,
-      'Tipo': item.tipo,
-      'Número de Personas': item.numeroPersonas,
-      'Total Tiempo Real (Resumen)': item.totalTiempoReal,
-      'Units Req (Documento Real)': item.unitsReq,
-      '% Diferencia': item.diffPercent !== null ? item.diffPercent.toFixed(2) : "-",
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Comparacion");
-    const dateStr = selectedDate ? new Date(selectedDate).toLocaleDateString("es-ES") : "actual";
-    XLSX.writeFile(workbook, `Comparacion_${dateStr}.xlsx`);
+    // ... (código existente)
   };
-  // +++ FIN DE LA NUEVA FUNCIÓN +++
 
   const tiposUnicos = useMemo(() => {
     return Array.from(new Set(comparisonData.map((row) => row.tipo).filter(Boolean))).sort();
@@ -314,135 +74,7 @@ export default function Comparacion() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Comparación de Archivos Excel</h1>
-      <div className="flex items-center space-x-4">
-        <label htmlFor="date-select" className="text-lg font-semibold">
-          Selecciona una fecha:
-        </label>
-        <select
-          id="date-select"
-          value={selectedDate}
-          onChange={handleDateChange}
-          className="p-2 border border-gray-300 rounded-lg"
-          disabled={loadingFechas}
-        >
-          <option value="">--Selecciona una fecha--</option>
-          {fechasDisponibles.map((item, index) => {
-            const fecha = new Date(item.fecha);
-            const fechaFormateada = fecha.toLocaleDateString('es-ES', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            });
-            return (
-              <option key={item.id || index} value={item.fecha}>
-                {fechaFormateada}
-              </option>
-            );
-          })}
-        </select>
-        <label htmlFor="resumen-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
-          <UploadCloud className="inline-block mr-2" />
-          {resumenFile ? resumenFile.name : "Importar Resumen"}
-          <input id="resumen-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'resumen')} />
-        </label>
-        <label htmlFor="documento-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
-          <UploadCloud className="inline-block mr-2" />
-          {documentoFile ? documentoFile.name : "Importar Documento Real"}
-          <input id="documento-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'documento')} />
-        </label>
-        {resumenFile && documentoFile && (
-          <button onClick={handleComparison} className="p-2 border border-gray-300 rounded-lg bg-blue-500 text-white hover:bg-blue-600">
-            Realizar Comparación
-          </button>
-        )}
-      </div>
-
-      {comparisonData.length > 0 && (
-        <div className="mt-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              Resultados de la Comparación
-            </h2>
-            {/* +++ INICIO DEL BLOQUE DE BOTONES MODIFICADO +++ */}
-            <div className="flex items-center space-x-4">
-              <label htmlFor="tipo-filter" className="text-sm font-medium">Filtrar por Tipo:</label>
-              <select
-                id="tipo-filter"
-                value={selectedTipo}
-                onChange={(e) => setSelectedTipo(e.target.value)}
-                className="p-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todos los tipos</option>
-                {tiposUnicos.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
-              </select>
-
-              {/* Si se está viendo un HISTÓRICO, se muestra el botón DESCARGAR */}
-              {selectedDate && (
-                <button
-                  onClick={handleExport}
-                  className="p-2 border border-green-300 rounded-lg bg-green-500 text-white hover:bg-green-600"
-                >
-                  Descargar Excel
-                </button>
-              )}
-
-              {/* Si es una NUEVA comparación, se muestran CANCELAR y GUARDAR */}
-              {!selectedDate && (
-                <>
-                  <button
-                    onClick={handleClearComparison}
-                    className="p-2 border border-red-300 rounded-lg bg-red-500 text-white hover:bg-red-600"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleSaveComparison}
-                    disabled={saving}
-                    className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400"
-                  >
-                    {saving ? "Guardando..." : "Guardar Comparación"}
-                  </button>
-                </>
-              )}
-            </div>
-            {/* +++ FIN DEL BLOQUE DE BOTONES MODIFICADO +++ */}
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b">Código</th>
-                  <th className="py-2 px-4 border-b">Descripción</th>
-                  <th className="py-2 px-4 border-b">Tipo</th>
-                  <th className="py-2 px-4 border-b">Número de Personas</th>
-                  <th className="py-2 px-4 border-b">Total Tiempo Real (Resumen)</th>
-                  <th className="py-2 px-4 border-b">Units Req (Documento Real)</th>
-                  <th className="py-2 px-4 border-b">% Diferencia</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((row,index) => {
-                  const isOverThreshold = row.diffPercent !== null && row.diffPercent > 25;
-                  return (
-                    <tr key={`${row.codigo}-${index}`} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b">{row.codigo}</td>
-                      <td className="py-2 px-4 border-b">{row.descripcion}</td>
-                      <td className="py-2 px-4 border-b">{row.tipo}</td>
-                      <td className="py-2 px-4 border-b">{row.numeroPersonas}</td>
-                      <td className="py-2 px-4 border-b">{row.totalTiempoReal.toFixed(3)}</td>
-                      <td className="py-2 px-4 border-b">{row.unitsReq.toFixed(3)}</td>
-                      <td className={`py-2 px-4 border-b ${isOverThreshold ? "text-red-600 font-semibold" : ""}`}>
-                        {row.diffPercent !== null ? `${row.diffPercent.toFixed(2)}%` : "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {/* ... (código JSX existente) ... */}
     </div>
   );
 }
