@@ -8,7 +8,7 @@ interface DataItem {
 }
 
 interface DataTableProps {
-  type: "general" | "resumen";
+  type: "general" | "resumen"| "disponibilidad";
   data?: DataItem[];
   loading?: boolean;
 }

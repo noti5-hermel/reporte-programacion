@@ -2,7 +2,7 @@
 import React from "react";
 
 interface RowProps {
-  type: "general" | "resumen";
+  type: "general" | "resumen"|"disponibilidad";
   row: any;
 }
 

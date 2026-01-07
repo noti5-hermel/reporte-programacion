@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, type ChangeEvent } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { UploadCloud } from "lucide-react";
 import * as XLSX from "xlsx";
 import { API_BASE_URL } from "../api/config";
@@ -22,31 +22,53 @@ export default function Comparacion() {
   const [saving, setSaving] = useState<boolean>(false);
   const [fechasDisponibles, setFechasDisponibles] = useState<Array<{ fecha: string; id?: number }>>([]);
   const [loadingFechas, setLoadingFechas] = useState<boolean>(false);
+  //const [deleting,setDeleting] = useState<boolean>(false);
+
 
   const loadComparacionByDate = async (fecha: string) => {
     if (!fecha) {
       setComparisonData([]);
       return;
     }
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         alert("No estás autenticado. Por favor, inicia sesión.");
         return;
       }
+
+      // Intentar obtener los registros de comparación por fecha
+      // El endpoint acepta compareDate como parámetro
       const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/?compareDate=${encodeURIComponent(fecha)}`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+      // 1. Leer el cuerpo de la respuesta UNA SOLA VEZ
       const data = await response.json();
+
+      // 2. Ahora sí puedes hacer log de los datos reales que recibiste
+      //console.log("Datos recibidos de la API:", data);
+    // 3. Usar response.ok para decidir qué hacer con los datos ya leídos
       if (response.ok) {
+        // Transformar los datos del API al formato ComparisonRow
         const transformedData: ComparisonRow[] = Array.isArray(data)
+        
+        
           ? data.map((item: any) => {
+            console.log("Item original del API:", item);
+              // Calcular diffPercent si tenemos unitsReq
+//console.log("unitReq:", item.unitsReq, "totalTiempoReal:", item.totalTiempoReal);
               let diffPercent: number | null = null;
               if (item.tiempo && item.total_tiempo_real !== 0) {
                 const diff = (item.tiempo - item.total_tiempo_real) / item.tiempo;
-                diffPercent = diff * 10;
+                diffPercent = diff * 10; // Multiplicar por 10 como en el código actual
               }
+
+              console.log(item.codigo,item.descripcion,item.totalTiempoReal);
+
               return {
                 codigo: item.code || "",
                 descripcion: item.description || "",
@@ -58,6 +80,7 @@ export default function Comparacion() {
               };
             })
           : [];
+        
         setComparisonData(transformedData);
       } else {
         console.error("Error al cargar los registros de comparación");
@@ -72,13 +95,19 @@ export default function Comparacion() {
   const handleDateChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const date = e.target.value;
     setSelectedDate(date);
+    
+    // Limpiar archivos y filtro cuando se selecciona una fecha
     setResumenFile(null);
     setDocumentoFile(null);
     setSelectedTipo("");
+    
+    // Limpiar los inputs de archivo
     const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
     const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
     if (resumenInput) resumenInput.value = "";
     if (documentoInput) documentoInput.value = "";
+    
+    // Cargar los registros de comparación para la fecha seleccionada
     await loadComparacionByDate(date);
   };
 
@@ -90,12 +119,17 @@ export default function Comparacion() {
         setLoadingFechas(false);
         return;
       }
+
       const response = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
       if (response.ok) {
         const data = await response.json();
+        // Asumimos que la respuesta es un array de objetos con fecha
         setFechasDisponibles(Array.isArray(data) ? data : []);
       } else {
         console.error("Error al cargar las fechas");
@@ -114,28 +148,45 @@ export default function Comparacion() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (fileType === 'resumen') setResumenFile(file);
-      else setDocumentoFile(file);
+      if (fileType === 'resumen') {
+        setResumenFile(file);
+      } else {
+        setDocumentoFile(file);
+      }
     }
   };
 
   const readExcelAsRows = (file: File): Promise<any[][]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
-          if (!data) return reject(new Error("No se pudo leer el archivo."));
+          if (!data) {
+            reject(new Error("No se pudo leer el archivo."));
+            return;
+          }
+
           const workbook = XLSX.read(data, { type: "binary" });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+          const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: "",
+          });
+
           resolve(rows);
         } catch (error) {
           reject(error);
         }
       };
-      reader.onerror = () => reject(new Error("Error al leer el archivo."));
+
+      reader.onerror = () => {
+        reject(new Error("Error al leer el archivo."));
+      };
+
       reader.readAsBinaryString(file);
     });
   };
@@ -145,44 +196,90 @@ export default function Comparacion() {
       alert("Debes seleccionar ambos archivos (Resumen y Documento Real).");
       return;
     }
+
     try {
       const [resumenRows, documentoRows] = await Promise.all([
         readExcelAsRows(resumenFile),
         readExcelAsRows(documentoFile),
       ]);
+
       if (resumenRows.length < 2 || documentoRows.length < 2) {
         alert("Alguno de los archivos no tiene datos suficientes.");
         return;
       }
+
+      // Función mejorada para parsear números
       const parseNumber = (value: any): number => {
         if (value === null || value === undefined || value === "") return 0;
-        const str = String(value).trim().replace(/,/g, ".");
+        const str = String(value)
+          .trim()
+          .replace(/,/g, ".") // Reemplazar comas por puntos
+          .replace(/\s/g, ""); // Eliminar espacios
         const num = parseFloat(str);
         return isNaN(num) ? 0 : num;
       };
+
+      // Debug: mostrar las primeras filas de ambos archivos
+      console.log("Primeras 3 filas del Resumen:", resumenRows.slice(0, 3));
+      console.log("Primeras 3 filas del Documento Real:", documentoRows.slice(0, 3));
+
+      // Asumimos el orden de columnas indicado por el usuario
+      // Resumen: A:Codigo, B:Descripcion, C:Tipo, D:Numero de personas, E:total tiempo real
       const resumenData = resumenRows.slice(1).filter((row) => row[0]);
+
+      // Documento real: A:Components, B:Units Req, C:Product, D:Description
+      // Empezar desde la fila 3 (índice 2, saltando las primeras 2 filas)
       const documentoData = documentoRows.slice(2).filter((row) => row[0]);
+
+      // Crear un mapa de Units Req por código de PRODUCTO
+      // Resumen: código = columna A
+      // Documento real: código = columna C (Product)
+      // Solo se toma UN valor por código (no se suman todas las filas).
+      // Si hay varias filas con el mismo código, se usa la PRIMERA que aparezca.
       const unitsReqByCode: Record<string, number> = {};
-      documentoData.forEach((row) => {
-        const code = String(row[2] ?? "").trim();
-        const unitsReqValue = row[1];
+      documentoData.forEach((row, index) => {
+        const code = String(row[2] ?? "").trim(); // Columna C: Product
+        const unitsReqValue = row[1]; // Columna B (Units Req)
         const unitsReq = parseNumber(unitsReqValue);
-        if (code && unitsReqByCode[code] === undefined) {
-          unitsReqByCode[code] = unitsReq;
+
+        if (!code) return;
+
+        // Si ya tenemos un valor para este código, NO lo sobreescribimos.
+        if (unitsReqByCode[code] !== undefined) {
+          return;
+        }
+
+        unitsReqByCode[code] = unitsReq;
+
+        // Debug: mostrar algunos valores para verificar
+        if (index < 5) {
+          console.log(`Código: ${code}, Units Req raw: ${unitsReqValue}, parsed: ${unitsReq}`);
         }
       });
+
+      // Debug: mostrar el mapa completo
+      console.log("Mapa de Units Req por código:", unitsReqByCode);
+
       const result: ComparisonRow[] = resumenData.map((row) => {
         const codigo = String(row[0]).trim();
         const descripcion = String(row[1] ?? "").trim();
-        const tipo = String(row[2] ?? "").trim();
-        const numeroPersonas = parseNumber(row[3]);
-        const totalTiempoReal = parseNumber(row[4]);
+        const tipo = String(row[2] ?? "").trim(); // Columna C (Tipo)
+        const numeroPersonas = parseNumber(row[3]); // Columna D (Número de personas)
+        const totalTiempoReal = parseNumber(row[4]); // Columna E (total tiempo real)
+
         const unitsReq = unitsReqByCode[codigo] ?? 0;
+        
+        // Debug: mostrar algunos códigos para verificar coincidencias
+        if (resumenData.indexOf(row) < 5) {
+          console.log(`Resumen - Código: ${codigo}, Total Tiempo Real: ${totalTiempoReal}, Units Req encontrado: ${unitsReq}`);
+        }
+
         let diffPercent: number | null = null;
         if (unitsReq !== 0) {
           const diff = (unitsReq - totalTiempoReal) / unitsReq;
           diffPercent = diff * 10;
         }
+
         return {
           codigo,
           descripcion,
@@ -193,6 +290,7 @@ export default function Comparacion() {
           diffPercent,
         };
       }).filter((row) => row.totalTiempoReal !== 0);
+
       setComparisonData(result);
     } catch (error) {
       console.error(error);
@@ -205,6 +303,7 @@ export default function Comparacion() {
       alert("No hay datos para guardar. Realiza una comparación primero.");
       return;
     }
+
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
@@ -213,6 +312,8 @@ export default function Comparacion() {
         setSaving(false);
         return;
       }
+
+      // Transformar los datos al formato requerido por el endpoint
       const compareDate = new Date().toISOString();
       const dataToSend = comparisonData.map((row) => ({
         codigo: row.codigo,
@@ -221,9 +322,10 @@ export default function Comparacion() {
         numeroPersonas: row.numeroPersonas,
         totalTiempoReal: row.totalTiempoReal,
         unitsReq: row.unitsReq,
-        diferencia: row.totalTiempoReal - row.unitsReq,
+        diferencia: row.totalTiempoReal - row.unitsReq, // diferencia = totalTiempoReal - unitsReq
         compareDate: compareDate,
       }));
+
       const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/`, {
         method: "POST",
         headers: {
@@ -232,28 +334,43 @@ export default function Comparacion() {
         },
         body: JSON.stringify(dataToSend),
       });
+
       if (response.ok) {
+        // Guardar la fecha en el historico
         try {
-          await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
+          const fechaResponse = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ fecha: compareDate }),
+            body: JSON.stringify({
+              fecha: compareDate,
+            }),
           });
+
+          if (!fechaResponse.ok) {
+            console.error("Error al guardar la fecha en el historico");
+          }
         } catch (fechaError) {
           console.error("Error al guardar la fecha en el historico:", fechaError);
         }
+
+        // Limpiar los archivos y datos después de guardar exitosamente
         setResumenFile(null);
         setDocumentoFile(null);
         setComparisonData([]);
         setSelectedTipo("");
+        
+        // Limpiar los inputs de archivo
         const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
         const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
         if (resumenInput) resumenInput.value = "";
         if (documentoInput) documentoInput.value = "";
+
+        // Recargar las fechas disponibles
         await loadFechas();
+
         alert("Comparación guardada exitosamente.");
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -267,54 +384,48 @@ export default function Comparacion() {
     }
   };
 
-  const handleClearComparison = () => {
-    if (window.confirm("¿Estás seguro de que quieres limpiar la comparación actual? Se perderán los datos no guardados.")) {
-      setComparisonData([]);
-      setResumenFile(null);
-      setDocumentoFile(null);
-      setSelectedTipo("");
-      const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
-      const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
-      if (resumenInput) resumenInput.value = "";
-      if (documentoInput) documentoInput.value = "";
-    }
-  };
+    /**
+   * Limpia los datos de la comparación actual en la pantalla.
+   * Restablece los archivos seleccionados y los resultados de la tabla.
+   */
+    const handleClearComparison = () => {
+      // Pide confirmación para evitar limpiezas accidentales.
+      if (window.confirm("¿Estás seguro de que quieres limpiar la comparación actual? Se perderán los datos no guardados.")) {
+        setComparisonData([]);
+        setResumenFile(null);
+        setDocumentoFile(null);
+        setSelectedTipo("");
+        
+        // Limpia visualmente los inputs de archivo.
+        const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
+        const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
+        if (resumenInput) resumenInput.value = "";
+        if (documentoInput) documentoInput.value = "";
+      }
+    };
+  
 
-  // +++ AÑADIR ESTA NUEVA FUNCIÓN +++
-  const handleExport = () => {
-    if (comparisonData.length === 0) {
-      alert("No hay datos para exportar.");
-      return;
-    }
-    const dataToExport = filteredData.map(item => ({
-      'Código': item.codigo,
-      'Descripción': item.descripcion,
-      'Tipo': item.tipo,
-      'Número de Personas': item.numeroPersonas,
-      'Total Tiempo Real (Resumen)': item.totalTiempoReal,
-      'Units Req (Documento Real)': item.unitsReq,
-      '% Diferencia': item.diffPercent !== null ? item.diffPercent.toFixed(2) : "-",
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Comparacion");
-    const dateStr = selectedDate ? new Date(selectedDate).toLocaleDateString("es-ES") : "actual";
-    XLSX.writeFile(workbook, `Comparacion_${dateStr}.xlsx`);
-  };
-  // +++ FIN DE LA NUEVA FUNCIÓN +++
-
+    /**
+   * Maneja la eliminación de un registro de comparación histórico.
+   * Solo se activa si hay una fecha seleccionada.
+   */
+  // Calcular los tipos únicos disponibles
   const tiposUnicos = useMemo(() => {
     return Array.from(new Set(comparisonData.map((row) => row.tipo).filter(Boolean))).sort();
   }, [comparisonData]);
 
+  // Filtrar datos según el tipo seleccionado
   const filteredData = useMemo(() => {
-    if (!selectedTipo) return comparisonData;
+    if (!selectedTipo) {
+      return comparisonData;
+    }
     return comparisonData.filter((row) => row.tipo === selectedTipo);
   }, [comparisonData, selectedTipo]);
 
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Comparación de Archivos Excel</h1>
+
       <div className="flex items-center space-x-4">
         <label htmlFor="date-select" className="text-lg font-semibold">
           Selecciona una fecha:
@@ -364,7 +475,6 @@ export default function Comparacion() {
             <h2 className="text-xl font-semibold">
               Resultados de la Comparación
             </h2>
-            {/* +++ INICIO DEL BLOQUE DE BOTONES MODIFICADO +++ */}
             <div className="flex items-center space-x-4">
               <label htmlFor="tipo-filter" className="text-sm font-medium">Filtrar por Tipo:</label>
               <select
@@ -377,17 +487,9 @@ export default function Comparacion() {
                 {tiposUnicos.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
               </select>
 
-              {/* Si se está viendo un HISTÓRICO, se muestra el botón DESCARGAR */}
-              {selectedDate && (
-                <button
-                  onClick={handleExport}
-                  className="p-2 border border-green-300 rounded-lg bg-green-500 text-white hover:bg-green-600"
-                >
-                  Descargar Excel
-                </button>
-              )}
+              {/* --- INICIO DEL CAMBIO: Lógica de botones --- */}
 
-              {/* Si es una NUEVA comparación, se muestran CANCELAR y GUARDAR */}
+              {/* Muestra los botones de acción solo si es una NUEVA comparación */}
               {!selectedDate && (
                 <>
                   <button
@@ -405,8 +507,11 @@ export default function Comparacion() {
                   </button>
                 </>
               )}
+
+              {/* --- FIN DEL CAMBIO --- */}
             </div>
-            {/* +++ FIN DEL BLOQUE DE BOTONES MODIFICADO +++ */}
+
+
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
@@ -423,17 +528,30 @@ export default function Comparacion() {
               </thead>
               <tbody>
                 {filteredData.map((row,index) => {
-                  const isOverThreshold = row.diffPercent !== null && row.diffPercent > 25;
+                  const isOverThreshold =
+                    row.diffPercent !== null && row.diffPercent > 25;
+
                   return (
                     <tr key={`${row.codigo}-${index}`} className="hover:bg-gray-50">
+
                       <td className="py-2 px-4 border-b">{row.codigo}</td>
                       <td className="py-2 px-4 border-b">{row.descripcion}</td>
                       <td className="py-2 px-4 border-b">{row.tipo}</td>
                       <td className="py-2 px-4 border-b">{row.numeroPersonas}</td>
-                      <td className="py-2 px-4 border-b">{row.totalTiempoReal.toFixed(3)}</td>
-                      <td className="py-2 px-4 border-b">{row.unitsReq.toFixed(3)}</td>
-                      <td className={`py-2 px-4 border-b ${isOverThreshold ? "text-red-600 font-semibold" : ""}`}>
-                        {row.diffPercent !== null ? `${row.diffPercent.toFixed(2)}%` : "-"}
+                      <td className="py-2 px-4 border-b">
+                        {row.totalTiempoReal.toFixed(3)}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        {row.unitsReq.toFixed(3)}
+                      </td>
+                      <td
+                        className={`py-2 px-4 border-b ${
+                          isOverThreshold ? "text-red-600 font-semibold" : ""
+                        }`}
+                      >
+                        {row.diffPercent !== null
+                          ? `${row.diffPercent.toFixed(2)}%`
+                          : "-"}
                       </td>
                     </tr>
                   );
