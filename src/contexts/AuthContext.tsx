@@ -1,80 +1,125 @@
-import React, { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
-import { API_BASE_URL } from '../api/config';
+import {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { API_BASE_URL } from "../api/config";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  loading: boolean; // <-- Nuevo estado
-  login: (username, password) => Promise<void>;
+  user: any;
+  hasRole: (roles: string[]) => boolean;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true); // <-- Inicia en true
+  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    const storedToken = localStorage.getItem("token");
+    const lastActivity = localStorage.getItem("last_activity");
+    const inactivityLimit = 60 * 60 * 1000; // 1 hour in milliseconds
+    if (storedToken && lastActivity && Date.now() - parseInt(lastActivity) < inactivityLimit) {
+      return storedToken;
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("last_activity");
+      return null;
+    }
+  });
+
+  const resetActivity = () => {
+    localStorage.setItem("last_activity", Date.now().toString());
+  };
 
   useEffect(() => {
-    // Comprueba el token en localStorage solo en la carga inicial.
-    const token = localStorage.getItem('token');
     if (token) {
-      // En una app real, aquí validarías el token con el backend.
-      setIsAuthenticated(true);
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+      resetActivity();
     }
-    // Marca la comprobación inicial como completada.
-    setLoading(false);
-  }, []);
+  }, [token]);
 
-  const login = async (username, password) => {
-    // 1. Crear un objeto para transformar los datos
-    const details = {
-      'username': username,
-      'password': password
-    };
+  useEffect(() => {
+    if (token) {
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+      const resetTimer = () => resetActivity();
 
-    // 2. Convertir el objeto a formato x-www-form-urlencoded
-    // Resultado: "username=tu_usuario&password=tu_contraseña"
-    const formBody = Object.keys(details)
-      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(details[key]))
-      .join('&');
+      events.forEach(event => window.addEventListener(event, resetTimer));
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login/`, {
-      method: 'POST',
+      const checkInactivity = () => {
+        const lastActivity = localStorage.getItem("last_activity");
+        const inactivityLimit = 60 * 60 * 1000; // 1 hour
+        if (lastActivity && Date.now() - parseInt(lastActivity) > inactivityLimit) {
+          logout();
+        }
+      };
+
+      const interval = setInterval(checkInactivity, 60000); // Check every minute
+
+      return () => {
+        events.forEach(event => window.removeEventListener(event, resetTimer));
+        clearInterval(interval);
+      };
+    }
+  }, [token]);
+
+  const login = async (username: string, password: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+      method: "POST",
       headers: {
-        // 3. Cambiar el Content-Type para que coincida con el formato del cuerpo
-        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      // 4. Enviar el cuerpo en el nuevo formato
-      body: formBody
+      body: new URLSearchParams({
+        username,
+        password,
+      }),
     });
 
-    if (!response.ok) {
-      // Intenta leer el error del backend para dar un mensaje más claro
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Error de login:", errorData);
-      throw new Error('Fallo al iniciar sesión. Revisa tus credenciales.');
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setToken(data.access_token);
+      setUser(data.user);
+    } else {
+      throw new Error("Login failed");
     }
-
-    const data = await response.json();
-    localStorage.setItem('token', data.access_token); // Es común que el token se llame 'access_token'
-    setIsAuthenticated(true);
   };
-
 
   const logout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("last_activity");
+    setToken(null);
+    setUser(null);
   };
 
-  const value = { isAuthenticated, loading, login, logout };
+  const hasRole = (roles: string[]) => {
+    if (!user || !user.role) return false;
+    return roles.includes(user.role);
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ isAuthenticated: !!token, user, hasRole, login, logout }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
