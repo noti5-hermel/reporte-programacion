@@ -1,5 +1,5 @@
 // Asegura que la URL base de la API siempre sea una URL absoluta.
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://192.168.1.155:8001";
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://192.168.1.5:8000";
 
 // Función para normalizar la URL, añadiendo http:// si es necesario.
 const normalizeUrl = (url: string) => {
