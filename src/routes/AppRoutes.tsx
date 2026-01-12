@@ -22,13 +22,13 @@ export const AppRoutes = () => {
   const { isAuthenticated, loading } = useAuth();
 
   // Muestra una pantalla de carga mientras se verifica la autenticación.
-  if (loading) {
+  /*if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Cargando aplicación...</p>
       </div>
     );
-  }
+  }*/
 
   return (
     <Router>

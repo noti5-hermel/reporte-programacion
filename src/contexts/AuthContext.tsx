@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedToken = localStorage.getItem("token");
     const lastActivity = localStorage.getItem("last_activity");
     const inactivityLimit = 60 * 60 * 1000; // 1 hour in milliseconds
+    
     if (storedToken && lastActivity && Date.now() - parseInt(lastActivity) < inactivityLimit) {
       return storedToken;
     } else {
