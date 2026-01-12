@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
 import { API_BASE_URL } from '../api/config';
 
 interface AuthContextType {
@@ -26,20 +26,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (username, password) => {
+    // 1. Crear un objeto para transformar los datos
+    const details = {
+      'username': username,
+      'password': password
+    };
+
+    // 2. Convertir el objeto a formato x-www-form-urlencoded
+    // Resultado: "username=tu_usuario&password=tu_contraseña"
+    const formBody = Object.keys(details)
+      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(details[key]))
+      .join('&');
+
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/login/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      headers: {
+        // 3. Cambiar el Content-Type para que coincida con el formato del cuerpo
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+      },
+      // 4. Enviar el cuerpo en el nuevo formato
+      body: formBody
     });
 
     if (!response.ok) {
-      throw new Error('Failed to log in');
+      // Intenta leer el error del backend para dar un mensaje más claro
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Error de login:", errorData);
+      throw new Error('Fallo al iniciar sesión. Revisa tus credenciales.');
     }
 
     const data = await response.json();
-    localStorage.setItem('token', data.token);
+    localStorage.setItem('token', data.access_token); // Es común que el token se llame 'access_token'
     setIsAuthenticated(true);
   };
+
 
   const logout = () => {
     localStorage.removeItem('token');
