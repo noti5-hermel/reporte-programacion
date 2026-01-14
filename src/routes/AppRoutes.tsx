@@ -19,7 +19,7 @@ const AppLayout = () => (
 );
 
 export const AppRoutes = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Muestra una pantalla de carga mientras se verifica la autenticación.
   /*if (loading) {

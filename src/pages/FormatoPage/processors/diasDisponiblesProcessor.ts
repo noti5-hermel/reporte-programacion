@@ -52,6 +52,11 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     const codigo = mainRow[descriptionIndex] ? String(mainRow[descriptionIndex]).trim() : '';
     const descripcion = nameRow[descriptionIndex] ? String(nameRow[descriptionIndex]).trim() : '';
     
+    // --- FILTRO PARA EXCLUIR REGISTROS INVÁLIDOS ---
+    if (descripcion === "8:") {
+      continue; // Si la descripción es "8:", ignora este par de filas y salta a la siguiente iteración.
+    }
+
     const disponible = mainRow[availableIndex] ? Number(mainRow[availableIndex]) : 0;
     const minimo = mainRow[minimumIndex] ? Number(mainRow[minimumIndex]) : 0;
     const reorder = mainRow[reorderIndex] ? Number(mainRow[reorderIndex]) : 0;
