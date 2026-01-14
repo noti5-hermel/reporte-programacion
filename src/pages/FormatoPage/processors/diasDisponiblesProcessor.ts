@@ -53,13 +53,14 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     const descripcion = nameRow[descriptionIndex] ? String(nameRow[descriptionIndex]).trim() : '';
     
     // --- FILTRO PARA EXCLUIR REGISTROS INVÁLIDOS ---
-    if (descripcion === "8:") {
-      continue; // Si la descripción es "8:", ignora este par de filas y salta a la siguiente iteración.
+    if (descripcion === "8:" || codigo === "Product Number") {
+      continue; // Ignora este par de filas y salta a la siguiente iteración.
     }
 
-    const disponible = mainRow[availableIndex] ? Number(mainRow[availableIndex]) : 0;
-    const minimo = mainRow[minimumIndex] ? Number(mainRow[minimumIndex]) : 0;
-    const reorder = mainRow[reorderIndex] ? Number(mainRow[reorderIndex]) : 0;
+    // --- ASEGURAR QUE LOS VALORES SEAN ENTEROS ---
+    const disponible = mainRow[availableIndex] ? Math.round(Number(mainRow[availableIndex])) : 0;
+    const minimo = mainRow[minimumIndex] ? Math.round(Number(mainRow[minimumIndex])) : 0;
+    const reorder = mainRow[reorderIndex] ? Math.round(Number(mainRow[reorderIndex])) : 0;
 
     // --- Lógica de cálculo para Días Disponibles ---
     let diasDisponibles: number | string;
