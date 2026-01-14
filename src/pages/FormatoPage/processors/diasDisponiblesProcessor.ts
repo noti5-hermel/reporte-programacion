@@ -62,8 +62,8 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     const minimo = mainRow[minimumIndex] ? Math.round(Number(mainRow[minimumIndex])) : 0;
     const reorder = mainRow[reorderIndex] ? Math.round(Number(mainRow[reorderIndex])) : 0;
 
-    // --- Lógica de cálculo para Días Disponibles ---
-    let diasDisponibles: number | string;
+    // --- Lógica de cálculo para Días Disponibles (siempre numérico) ---
+    let diasDisponibles: number;
     if (minimo > 0) {
       const normalizedDesc = descripcion.trim().toUpperCase();
       if (normalizedDesc.endsWith('X')) {
@@ -73,7 +73,7 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
       }
       diasDisponibles = Math.round(diasDisponibles);
     } else {
-      diasDisponibles = 'N/A';
+      diasDisponibles = 0; // Usar 0 en lugar de "N/A"
     }
     
     if (codigo) {
@@ -88,13 +88,13 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     }
   }
 
-  // 5. Ordenar los datos procesados.
+  // 5. Ordenar los datos procesados (lógica simplificada).
   processedData.sort((a, b) => {
     // Indices: 1 = DESCRIPCION, 5 = DIAS DISPONIBLES
     const descA = String(a[1]).toLowerCase();
     const descB = String(b[1]).toLowerCase();
-    const diasA = a[5];
-    const diasB = b[5];
+    const diasA = Number(a[5]);
+    const diasB = Number(b[5]);
 
     // Ordenamiento secundario (agrupación): por descripción alfabética.
     const descCompare = descA.localeCompare(descB);
@@ -103,12 +103,7 @@ export const processDiasDisponibles = (excelRows: any[][]): (string | number)[][
     }
 
     // Ordenamiento primario: por días disponibles (menor a mayor).
-    // Los valores 'N/A' se consideran mayores que cualquier número y van al final.
-    if (diasA === 'N/A' && diasB !== 'N/A') return 1;
-    if (diasA !== 'N/A' && diasB === 'N/A') return -1;
-    if (diasA === 'N/A' && diasB === 'N/A') return 0; // Si ambos son N/A, se mantiene el orden por descripción.
-
-    return Number(diasA) - Number(diasB);
+    return diasA - diasB;
   });
   
   // 6. Devolver los datos con la cabecera del reporte final.
