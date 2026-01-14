@@ -8,7 +8,7 @@ interface DataItem {
 }
 
 interface DataTableProps {
-  type: "general" | "resumen"| "disponibilidad";
+  type: "general" | "resumen" | "disponibilidad";
   data?: DataItem[];
   loading?: boolean;
 }
@@ -19,32 +19,33 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(30);
 
-  const columns =
-    type === "general"
-      ? [
-          "Fecha",
+  // 🔹 Definir columnas basadas en el tipo de tabla
+  const columns = useMemo(() => {
+    switch (type) {
+      case "disponibilidad":
+        return [
           "Código",
           "Descripción",
-          "Lote",
-          "Tipo",
-          "Actividad",
-          "Horas",
-          "Cantidad",
-          "Minutos",
-          "Personas",
-          "Total Horas",
-          "Promedio",
-        ]
-      : [
-          "Código",
-          "Descripción",
-          "Tipo",
-          "Suma Total Horas",
-          "Cantidad producida",
-          "Prom. Tiempo Producto",
-          "N° Personas",
+          "Disponible",
+          "Mínimo",
+          "Reorden",
+          "Días Disponibles",
+          "Fecha de Carga",
+        ];
+      case "general":
+        return [
+          "Fecha", "Código", "Descripción", "Lote", "Tipo", "Actividad",
+          "Horas", "Cantidad", "Minutos", "Personas", "Total Horas", "Promedio",
+        ];
+      case "resumen":
+      default:
+        return [
+          "Código", "Descripción", "Tipo", "Suma Total Horas",
+          "Cantidad producida", "Prom. Tiempo Producto", "N° Personas",
           "Total Tiempo Real",
         ];
+    }
+  }, [type]);
 
   // 🔹 Función para manejar el ordenamiento
   const handleSort = (column: string) => {
