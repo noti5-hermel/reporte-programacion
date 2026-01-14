@@ -13,7 +13,13 @@ const DisponibilidadPage = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/api/v1/reports/disponibilidad`, {
+        if (!token) {
+          setError("No estás autenticado. Por favor, inicia sesión.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/available/`, {
           headers: { "Authorization": `Bearer ${token}` },
         });
 
@@ -21,7 +27,8 @@ const DisponibilidadPage = () => {
           const result = await response.json();
           setData(Array.isArray(result) ? result : []);
         } else {
-          setError("No se pudieron cargar los datos de disponibilidad.");
+          const errorText = await response.text();
+          setError(`No se pudieron cargar los datos de disponibilidad. El servidor respondió: ${errorText || response.statusText}`);
         }
       } catch (err) {
         setError("Error al conectar con el servidor.");
