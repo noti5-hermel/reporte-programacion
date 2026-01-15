@@ -10,7 +10,7 @@ const DisponibilidadPage = () => {
 
   // --- Estados para filtros y ordenamiento ---
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortType, setSortType] = useState<string>(""); // 'alpha', 'reorder_desc'
+  const [sortType, setSortType] = useState<string>(""); // 'alpha', 'reorder_desc', 'dias_asc'
   const [diasFilter, setDiasFilter] = useState("");
   const [reorderFilter, setReorderFilter] = useState("");
 
@@ -72,6 +72,8 @@ const DisponibilidadPage = () => {
       filtered.sort((a, b) => String(a.description).localeCompare(String(b.description)));
     } else if (sortType === 'reorder_desc') {
       filtered.sort((a, b) => Number(b.reorder) - Number(a.reorder));
+    } else if (sortType === 'dias_asc') {
+      filtered.sort((a, b) => Number(a.dias_disponibles) - Number(b.dias_disponibles));
     }
 
     return filtered;
@@ -121,10 +123,11 @@ const DisponibilidadPage = () => {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">Ordenar por:</span>
                 <button onClick={() => setSortType('alpha')} className={`px-3 py-1 text-sm rounded-full ${sortType === 'alpha' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Descripción (A-Z)</button>
                 <button onClick={() => setSortType('reorder_desc')} className={`px-3 py-1 text-sm rounded-full ${sortType === 'reorder_desc' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Reorden (Mayor a menor)</button>
+                <button onClick={() => setSortType('dias_asc')} className={`px-3 py-1 text-sm rounded-full ${sortType === 'dias_asc' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Días Disp. (Menor a mayor)</button>
             </div>
             <button onClick={resetFilters} className="px-4 py-1 text-sm font-semibold text-red-600 bg-red-100 rounded-full hover:bg-red-200">Limpiar Filtros</button>
         </div>
