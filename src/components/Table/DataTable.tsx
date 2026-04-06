@@ -35,7 +35,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
       case "general":
         return [
           "Fecha", "Código", "Descripción", "Lote", "Tipo", "Actividad",
-          "Horas", "Cantidad", "Minutos", "Personas", "Total Horas", "Promedio",
+          "Productividad", "Cantidad", "Minutos(horas)", "Personas", "Total Horas",
         ];
       case "resumen":
       default:

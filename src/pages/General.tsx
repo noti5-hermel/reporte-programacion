@@ -26,13 +26,12 @@ export default function General() {
           const transformed = Array.isArray(result)
             ? result.map((item: any) => ({
                 ...item,
-                horas: item.horas ?? item.horas_unitarias ?? null,
+                productividad: item.productividad ?? item.horas ?? item.horas_unitarias ?? null,
                 cantidad: item.cantidad ?? item.cantidad_real ?? null,
                 // API change: prefer `minutes`; keep fallbacks for compatibility
                 minutos: item.minutes ?? item.minutos ?? item.minutos_estimados ?? null,
                 totalHoras: item.totalHoras ?? item.total_horas ?? null,
-                // API change: prefer `proporcion`; keep fallbacks
-                promedio: item.proporcion ?? item.ratio_horas ?? item.promedio ?? null,
+                personas: item.personas ?? null,
               }))
             : result;
           setData(transformed);
