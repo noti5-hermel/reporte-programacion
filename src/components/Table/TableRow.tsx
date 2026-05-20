@@ -2,7 +2,7 @@
 import React from "react";
 
 interface RowProps {
-  type: "general" | "resumen" | "disponibilidad";
+  type: "general" | "resumen" | "disponibilidad" | "rendimiento";
   row: any;
 }
 
@@ -53,17 +53,49 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
     );
   }
 
-  // --- Caso para la tabla de Resumen (default) ---
+  // --- Caso para la tabla de Resumen ---
+  if (type === "resumen") {
+    return (
+      <tr className="hover:bg-gray-50 text-sm">
+        <td className="px-3 py-2 border-b">{row.codigo}</td>
+        <td className="px-3 py-2 border-b">{row.descripcion}</td>
+        <td className="px-3 py-2 border-b">{row.tipo}</td>
+        <td className="px-3 py-2 border-b text-right">{row.sumaTotalHoras}</td>
+        <td className="px-3 py-2 border-b text-right">{row.sumCantidad}</td>
+        <td className="px-3 py-2 border-b text-right">{row.promTiempoProducto}</td>
+        <td className="px-3 py-2 border-b text-right">{row.numeroPersonas}</td>
+        <td className="px-3 py-2 border-b text-right">{row.totalTiempoReal}</td>
+      </tr>
+    );
+  }
+
+  // --- Caso para la tabla de Rendimiento ---
+  const isCompleted = row.is_completed || row.estado === 'Completada' || (row.real_quantity && row.real_quantity > 0);
+  const prodValue = parseFloat(String(row.productividad || 0).replace('%', ''));
+  const prodColor = prodValue >= 85 ? 'text-green-600' : prodValue >= 60 ? 'text-yellow-600' : 'text-red-600';
+
   return (
-    <tr className="hover:bg-gray-50">
-      <td className="px-3 py-2 border-b">{row.codigo}</td>
-      <td className="px-3 py-2 border-b">{row.descripcion}</td>
-      <td className="px-3 py-2 border-b">{row.tipo}</td>
-      <td className="px-3 py-2 border-b text-right">{row.sumaTotalHoras}</td>
-      <td className="px-3 py-2 border-b text-right">{row.sumCantidad}</td>
-      <td className="px-3 py-2 border-b text-right">{row.promTiempoProducto}</td>
-      <td className="px-3 py-2 border-b text-right">{row.numeroPersonas}</td>
-      <td className="px-3 py-2 border-b text-right">{row.totalTiempoReal}</td>
+    <tr className="hover:bg-gray-50 text-sm">
+      <td className="px-3 py-2 border-b font-semibold">{row.team_name || row.equipo || "-"}</td>
+      <td className="px-3 py-2 border-b">{row.codigo || row.code || "-"}</td>
+      <td className="px-3 py-2 border-b">{row.descripcion || row.description || "-"}</td>
+      <td className="px-3 py-2 border-b">{row.material || "-"}</td>
+      <td className="px-3 py-2 border-b">{row.lote || "-"}</td>
+      <td className="px-3 py-2 border-b text-right">{row.quantity || row.scheduled_quantity || 0}</td>
+      <td className="px-3 py-2 border-b text-right">{row.real_quantity || 0}</td>
+      <td className="px-3 py-2 border-b text-center">{row.real_start_time || "-"}</td>
+      <td className="px-3 py-2 border-b text-center">{row.real_end_time || "-"}</td>
+      <td className="px-3 py-2 border-b text-right font-mono">{row.real_minutes || row.minutos || "-"}</td>
+      <td className={`px-3 py-2 border-b text-right font-bold ${prodColor}`}>
+        {row.productividad ? (typeof row.productividad === 'number' ? `${row.productividad.toFixed(2)}%` : row.productividad) : "0.00%"}
+      </td>
+      <td className="px-3 py-2 border-b text-center">
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {isCompleted ? 'Completada' : 'Pendiente'}
+        </span>
+      </td>
     </tr>
   );
 };

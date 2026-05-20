@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {SidebarItem} from "./SidebarItem";
-import { LogOut, ChevronLeft, TableProperties, ClipboardList, GitCompareArrows, FileText, PackageCheck } from "lucide-react"; // Añadir nuevo ícono
+import { LogOut, ChevronLeft, TableProperties, ClipboardList, GitCompareArrows, FileText, PackageCheck, Activity } from "lucide-react"; // Añadir nuevo ícono
 import { useAuth } from "../../contexts/AuthContext";
 
 const Sidebar = () => {
@@ -40,6 +40,12 @@ const Sidebar = () => {
             label="Tabla General"
             isCollapsed={isCollapsed}
             icon={<TableProperties />}
+          />
+          <SidebarItem
+            to="/rendimiento"
+            label="Rendimiento"
+            isCollapsed={isCollapsed}
+            icon={<Activity />}
           />
           <SidebarItem
             to="/resumen"

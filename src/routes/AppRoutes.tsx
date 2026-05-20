@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-
 import Sidebar from "../components/Sidebar/Sidebar";
 import General from "../pages/General";
 import Resumen from "../pages/Resumen";
+import Rendimiento from "../pages/Rendimiento";
 import Login from "../pages/Login/LoginPage";
 import Comparacion from "../pages/Comparacion";
 import FormatoPage from "../pages/FormatoPage"; 
@@ -42,7 +43,7 @@ export const AppRoutes = () => {
         
         <Route 
           path="/login" 
-          element={!isAuthenticated ? <Login /> : <Navigate to="/general" replace />} 
+          element={isAuthenticated ? <Navigate to="/general" replace /> : <div className="flex items-center justify-center h-screen bg-gray-50"><p className="text-gray-500 font-medium">Redirigiendo al inicio de sesión...</p></div>} 
         />
 
         {/* --- ESTRUCTURA DE RUTAS PROTEGIDAS CORREGIDA --- */}
@@ -53,6 +54,7 @@ export const AppRoutes = () => {
             {/* El <Outlet> dentro de AppLayout renderizará estas rutas hijas. */}
             <Route path="/general" element={<General />} />
             <Route path="/resumen" element={<Resumen />} />
+            <Route path="/rendimiento" element={<Rendimiento />} />
             <Route path="/comparacion" element={<Comparacion />} />
             <Route path="/formato" element={<FormatoPage />} />
             <Route path="/disponibilidad" element={<DisponibilidadPage />} />
