@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-import { API_BASE_URL } from "../api/config";
+import { availableService } from "../services/availableService";
 
 // --- Función de ayuda para la agrupación ---
 const getBaseDescription = (desc: string) => {
@@ -40,17 +40,8 @@ const DisponibilidadPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("No estás autenticado."); return;
-        }
-        const response = await fetch(`${API_BASE_URL}/api/v1/available/`, { headers: { "Authorization": `Bearer ${token}` } });
-        if (response.ok) {
-          const result = await response.json();
-          setData(Array.isArray(result) ? result : []);
-        } else {
-          setError("No se pudieron cargar los datos.");
-        }
+        const result = await availableService.getAvailableItems();
+        setData(Array.isArray(result) ? result : []);
       } catch (err) {
         setError("Error al conectar con el servidor.");
       } finally {

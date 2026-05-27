@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-import { API_BASE_URL } from "../api/config";
+import { taskPerformanceService } from "../services/taskPerformanceService";
 import { Calendar, Users, Activity, CheckCircle } from "lucide-react";
 
 export default function Rendimiento() {
@@ -16,37 +16,26 @@ export default function Rendimiento() {
     setLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports/task-performance`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
+      const result = await taskPerformanceService.getTaskPerformance();
+      const transformed = Array.isArray(result)
+        ? result.map((item: any) => ({
+            ...item,
+            team_name: item.equipo || item.team_name || "General",
+            real_minutes: item.minutes || item.minutos || item.real_minutes || 0,
+            productividad: item.productividad || 0,
+            real_quantity: item.cantidad || item.real_quantity || 0,
+            scheduled_quantity: item.scheduled_quantity || item.cantidad || 0,
+          }))
+        : [];
+      
+      // Filtrar por la fecha seleccionada solo si hay una fecha
+      const filteredByDate = transformed.filter(item => {
+        if (!date) return true;
+        if (!item.fecha) return false;
+        return item.fecha.startsWith(date);
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const transformed = Array.isArray(result)
-          ? result.map((item: any) => ({
-              ...item,
-              team_name: item.equipo || item.team_name || "General",
-              real_minutes: item.minutes || item.minutos || item.real_minutes || 0,
-              productividad: item.productividad || 0,
-              real_quantity: item.cantidad || item.real_quantity || 0,
-              scheduled_quantity: item.scheduled_quantity || item.cantidad || 0,
-            }))
-          : [];
-        
-        // Filtrar por la fecha seleccionada solo si hay una fecha
-        const filteredByDate = transformed.filter(item => {
-          if (!date) return true;
-          if (!item.fecha) return false;
-          return item.fecha.startsWith(date);
-        });
-
-        setData(filteredByDate);
-      } else {
-        setError("Error al cargar los datos de rendimiento");
-      }
+      setData(filteredByDate);
     } catch (err) {
       setError("Error de conexión con el servidor");
     } finally {

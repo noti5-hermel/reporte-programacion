@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-import { API_BASE_URL } from "../api/config";
+import { taskPerformanceService } from "../services/taskPerformanceService";
 
 export default function General() {
   const [data, setData] = useState<any[]>([]);
@@ -14,30 +14,19 @@ export default function General() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/api/v1/reports/task-performance`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const transformed = Array.isArray(result)
-            ? result.map((item: any) => ({
-                ...item,
-                productividad: item.productividad ?? item.horas ?? item.horas_unitarias ?? null,
-                cantidad: item.cantidad ?? item.cantidad_real ?? null,
-                // API change: prefer `minutes`; keep fallbacks for compatibility
-                minutos: item.minutes ?? item.minutos ?? item.minutos_estimados ?? null,
-                totalHoras: item.totalHoras ?? item.total_horas ?? null,
-                personas: item.personas ?? null,
-              }))
-            : result;
-          setData(transformed);
-        } else {
-          setError("Failed to fetch data");
-        }
+        const result = await taskPerformanceService.getTaskPerformance();
+        const transformed = Array.isArray(result)
+          ? result.map((item: any) => ({
+              ...item,
+              productividad: item.productividad ?? item.horas ?? item.horas_unitarias ?? null,
+              cantidad: item.cantidad ?? item.cantidad_real ?? null,
+              // API change: prefer `minutes`; keep fallbacks for compatibility
+              minutos: item.minutes ?? item.minutos ?? item.minutos_estimados ?? null,
+              totalHoras: item.totalHoras ?? item.total_horas ?? null,
+              personas: item.personas ?? null,
+            }))
+          : result;
+        setData(transformed);
       } catch (err) {
         setError("Error fetching data");
       } finally {
