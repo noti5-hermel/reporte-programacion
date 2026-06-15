@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuthContext } from "../context/AuthContext";
 
-export default function LoginPage() {
+export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { login } = useAuthContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     try {
       await login(username, password);
-      // No need to navigate, the context will update and AppRoutes will handle redirection
     } catch (err) {
       setError("Failed to log in");
     }
