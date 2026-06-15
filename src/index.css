@@ -1,3 +1,146 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@theme {
+  --color-background-primary: var(--bg-primary);
+  --color-background-secondary: var(--bg-secondary);
+  --color-button-primary: var(--btn-primary);
+  --color-button-primary-hover: var(--btn-hover);
+  --color-button-secondary: var(--btn-secondary);
+  --color-title: var(--text-title);
+  --color-subtitle: var(--text-subtitle);
+  --color-icon-bg: var(--icon-bg);
+  --color-border-card: var(--border-card);
+  --shadow-card: var(--card-shadow);
+  --shadow-btn-glow: var(--btn-glow);
+  --shadow-btn-glow-hover: var(--btn-glow-hover);
+}
+
+:root {
+  /* LIGHT MODE */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --btn-primary: #EA2B1F;
+  --btn-hover: #d62419;
+  --btn-secondary: #f05c53;
+  --text-title: #0f172a;
+  --text-subtitle: #64748b;
+  --icon-bg: #fdeaea;
+  --border-card: #f1f5f9;
+  --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --btn-glow: 0 4px 15px -3px rgba(234, 43, 31, 0.3);
+  --btn-glow-hover: 0 10px 25px -3px rgba(234, 43, 31, 0.4);
+
+  --sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --heading: 'Outfit', system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 16px/1.6 var(--sans);
+  color-scheme: light dark;
+  color: var(--text-subtitle);
+  background: var(--bg-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* DARK MODE */
+    --bg-primary: #0b0f19;
+    --bg-secondary: #161b26;
+    --btn-primary: #f83b30;
+    --btn-hover: #ef4444;
+    --btn-secondary: #222938;
+    --btn-secondary-text: #f8fafc;
+    --text-title: #f8fafc;
+    --text-subtitle: #94a3b8;
+    --icon-bg: rgba(248, 59, 48, 0.15);
+    --border-card: #222938;
+    --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    --btn-glow: 0 4px 12px rgba(248, 59, 48, 0.3);
+    --btn-glow-hover: 0 6px 20px rgba(248, 59, 48, 0.45);
+  }
+}
+
+#root {
+  width: 100%;
+  max-width: none;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background-color: var(--bg-primary);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--heading);
+    font-weight: 800;
+    color: var(--text-title);
+    line-height: 1.1;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(var(--bg-secondary-rgb, 255, 255, 255), 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.125);
+  }
+
+  .text-gradient {
+    background: linear-gradient(to right, var(--btn-primary), #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .shadow-premium {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+}

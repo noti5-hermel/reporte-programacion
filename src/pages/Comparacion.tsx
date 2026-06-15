@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect} from "react";
+import { useState, useMemo, useEffect } from "react";
 import { UploadCloud } from "lucide-react";
 import * as XLSX from "xlsx";
 import { compareService } from "../services/compareService";
@@ -32,21 +32,21 @@ export default function Comparacion() {
       const data = await compareService.getCompareRecords(fecha);
       const transformedData: ComparisonRow[] = Array.isArray(data)
         ? data.map((item: any) => {
-            let diffPercent: number | null = null;
-            if (item.tiempo && item.total_tiempo_real !== 0) {
-              const diff = (item.tiempo - item.total_tiempo_real) / item.tiempo;
-              diffPercent = diff * 10;
-            }
-            return {
-              codigo: item.code || "",
-              descripcion: item.description || "",
-              tipo: item.tipo || "",
-              numeroPersonas: item.numero_personas || 0,
-              totalTiempoReal: Number(item.total_tiempo_real) || 0,
-              unitsReq: Number(item.tiempo) || 0,
-              diffPercent: diffPercent,
-            };
-          })
+          let diffPercent: number | null = null;
+          if (item.tiempo && item.total_tiempo_real !== 0) {
+            const diff = (item.tiempo - item.total_tiempo_real) / item.tiempo;
+            diffPercent = diff * 10;
+          }
+          return {
+            codigo: item.code || "",
+            descripcion: item.description || "",
+            tipo: item.tipo || "",
+            numeroPersonas: item.numero_personas || 0,
+            totalTiempoReal: Number(item.total_tiempo_real) || 0,
+            unitsReq: Number(item.tiempo) || 0,
+            diffPercent: diffPercent,
+          };
+        })
         : [];
       setComparisonData(transformedData);
     } catch (error) {
@@ -70,7 +70,7 @@ export default function Comparacion() {
 
   const loadFechas = async () => {
     setLoadingFechas(true);
-    try { 
+    try {
       const data = await compareService.getHistoricoFechas();
       setFechasDisponibles(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -366,7 +366,7 @@ export default function Comparacion() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row,index) => {
+                {filteredData.map((row, index) => {
                   const isOverThreshold = row.diffPercent !== null && row.diffPercent > 25;
                   return (
                     <tr key={`${row.codigo}-${index}`} className="hover:bg-gray-50">
