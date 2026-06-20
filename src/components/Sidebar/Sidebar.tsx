@@ -1,9 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SidebarItem } from "./SidebarItem";
-import { ChevronLeft, TableProperties, ClipboardList, GitCompareArrows, FileText, PackageCheck, Activity } from "lucide-react"; // Añadir nuevo ícono
+import { useAuth } from "../../hooks/useAuth";
+import { permissionService, REPORT_OPTIONS } from "../../services/permissionService";
+import {
+  ChevronLeft,
+  TableProperties,
+  ClipboardList,
+  GitCompareArrows,
+  FileText,
+  PackageCheck,
+  Activity,
+  Shield,
+} from "lucide-react";
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: JSX.Element;
+  reportKey: string;
+}
+
+const ALL_ITEMS: NavItem[] = [
+  { to: "/general", label: "Tabla General", icon: <TableProperties />, reportKey: "general" },
+  { to: "/rendimiento", label: "Rendimiento", icon: <Activity />, reportKey: "rendimiento" },
+  { to: "/resumen", label: "Tabla Resumida", icon: <ClipboardList />, reportKey: "resumen" },
+  { to: "/comparacion", label: "Comparación", icon: <GitCompareArrows />, reportKey: "comparacion" },
+  { to: "/formato", label: "Formato", icon: <FileText />, reportKey: "formato" },
+  { to: "/disponibilidad", label: "Disponibilidad", icon: <PackageCheck />, reportKey: "disponibilidad" },
+];
+
+function useUserReports() {
+  const { user } = useAuth();
+  const [allowedReports, setAllowedReports] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!user?.username) return;
+
+    const isAdmin = user.role === "ADMIN";
+    if (isAdmin) {
+      setAllowedReports(new Set(REPORT_OPTIONS.map((r) => r.key)));
+      return;
+    }
+
+    const cached = localStorage.getItem("user_reports");
+    if (cached) {
+      try {
+        setAllowedReports(new Set(JSON.parse(cached)));
+        return;
+      } catch {}
+    }
+
+    permissionService
+      .getMyPermissions()
+      .then((res) => {
+        const reports = new Set(res.reports);
+        setAllowedReports(reports);
+        localStorage.setItem("user_reports", JSON.stringify([...reports]));
+      })
+      .catch(() => setAllowedReports(new Set()));
+  }, [user?.username, user?.role]);
+
+  return allowedReports;
+}
 
 const Sidebar = () => {
+  const { user } = useAuth();
+  const allowedReports = useUserReports();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const isAdmin = user?.role === "ADMIN";
+
+  const visibleItems = ALL_ITEMS.filter(
+    (item) => isAdmin || allowedReports?.has(item.reportKey)
+  );
 
   return (
     <aside
@@ -21,8 +90,8 @@ const Sidebar = () => {
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={`absolute z-50 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white shadow-md border border-slate-600 transition-all ${isCollapsed
-                ? "top-[22px] " // Posición cuando está colapsado (un poco más abajo)
-                : "top-4 right-1"      // Posición actual (cuando está abierto)
+                ? "top-[22px] "
+                : "top-4 right-1"
               }`}
           >
             <ChevronLeft
@@ -33,45 +102,28 @@ const Sidebar = () => {
         </div>
 
         <nav className="flex flex-col gap-2">
-          <SidebarItem
-            to="/general"
-            label="Tabla General"
-            isCollapsed={isCollapsed}
-            icon={<TableProperties />}
-          />
-          <SidebarItem
-            to="/rendimiento"
-            label="Rendimiento"
-            isCollapsed={isCollapsed}
-            icon={<Activity />}
-          />
-          <SidebarItem
-            to="/resumen"
-            label="Tabla Resumida"
-            isCollapsed={isCollapsed}
-            icon={<ClipboardList />}
-          />
-          <SidebarItem
-            to="/comparacion"
-            label="Comparación"
-            isCollapsed={isCollapsed}
-            icon={<GitCompareArrows />}
-          />
-          <SidebarItem
-            to="/formato"
-            label="Formato"
-            isCollapsed={isCollapsed}
-            icon={<FileText />}
-          />
-          {/* Añadir nuevo enlace a Disponibilidad */}
-          <SidebarItem
-            to="/disponibilidad"
-            label="Disponibilidad"
-            isCollapsed={isCollapsed}
-            icon={<PackageCheck />}
-          />
+          {visibleItems.map((item) => (
+            <SidebarItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              isCollapsed={isCollapsed}
+              icon={item.icon}
+            />
+          ))}
         </nav>
       </div>
+
+      {isAdmin && (
+        <div className="pt-4 border-t border-slate-600">
+          <SidebarItem
+            to="/permisos"
+            label="Permisos"
+            isCollapsed={isCollapsed}
+            icon={<Shield />}
+          />
+        </div>
+      )}
     </aside>
   );
 };

@@ -8,6 +8,7 @@ import Rendimiento from "../pages/Rendimiento";
 import Comparacion from "../pages/Comparacion";
 import FormatoPage from "../pages/FormatoPage";
 import DisponibilidadPage from "../pages/Disponibilidad";
+import GestionPermisos from "../pages/GestionPermisos";
 import PrivateRoute from "./PrivateRoute";
 
 const router = createBrowserRouter([
@@ -67,6 +68,14 @@ const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <DisponibilidadPage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/permisos",
+        element: (
+          <PrivateRoute>
+            <GestionPermisos />
           </PrivateRoute>
         ),
       },
