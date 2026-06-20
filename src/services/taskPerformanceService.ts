@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/api";
+import { REPORTS_API_URL } from "../config/api";
 
 export interface TaskPerformanceItem {
   fecha: string;
@@ -21,7 +21,7 @@ export interface TaskPerformanceItem {
 export const taskPerformanceService = {
   async getTaskPerformance(): Promise<TaskPerformanceItem[]> {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/reports/task-performance`, {
+    const response = await fetch(`${REPORTS_API_URL}/api/v1/reports/task-performance`, {
       headers: {
         "Authorization": `Bearer ${token}`,
       },

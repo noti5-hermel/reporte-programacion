@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/api";
+import { REPORTS_API_URL } from "../config/api";
 
 export interface TaskPerformanceGroupItem {
   code: string;
@@ -15,7 +15,7 @@ export interface TaskPerformanceGroupItem {
 export const productivityService = {
   async getTaskPerformanceGroup(year?: number | null, month?: number | null): Promise<TaskPerformanceGroupItem[]> {
     const token = localStorage.getItem("token");
-    let url = `${API_BASE_URL}/api/v1/reports/task-performance-group`;
+    let url = `${REPORTS_API_URL}/api/v1/reports/task-performance-group`;
     
     const params = new URLSearchParams();
     if (year !== undefined && year !== null) {
