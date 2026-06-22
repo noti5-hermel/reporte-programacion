@@ -1,4 +1,4 @@
-import { REPORTS_API_URL } from "../config/api";
+import { REPORTS_API_URL, fetchWithAuth } from "../config/api";
 
 export interface OperatorPerformanceItem {
   operator_id: string;
@@ -22,15 +22,10 @@ export interface OperatorPerformanceItem {
 
 export const operatorPerformanceService = {
   async getOperatorPerformance(start_date: string, end_date: string): Promise<OperatorPerformanceItem[]> {
-    const token = localStorage.getItem("token");
     const params = new URLSearchParams({ start_date, end_date });
     const url = `${REPORTS_API_URL}/api/v1/reports/operator-performance?${params}`;
 
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
+    const response = await fetchWithAuth(url);
 
     if (!response.ok) {
       throw new Error("Failed to fetch operator performance data");
