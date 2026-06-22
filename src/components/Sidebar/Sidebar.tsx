@@ -76,20 +76,20 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`min-h-screen sticky top-0 bg-slate-800 text-white p-4 transition-all duration-300 ease-in-out flex flex-col justify-between flex-shrink-0 ${isCollapsed ? "w-20" : "w-64"
+      className={`min-h-screen sticky top-0 bg-background-secondary border-r border-border-card p-4 transition-all duration-300 ease-in-out flex flex-col justify-between flex-shrink-0 ${isCollapsed ? "w-20" : "w-64"
         }`}
     >
       <div>
         <div className="flex items-center justify-between mb-6 mt-4">
           <h2
-            className={`text-xl font-bold transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"
+            className={`text-xl font-bold text-title transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"
               }`}
           >
             Panel
           </h2>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className={`absolute z-50 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white shadow-md border border-slate-600 transition-all ${isCollapsed
+            className={`absolute z-50 p-2 rounded-xl bg-background-primary hover:bg-background-secondary text-subtitle hover:text-title shadow-sm border border-border-card transition-all ${isCollapsed
                 ? "top-[22px] "
                 : "top-4 right-1"
               }`}
@@ -115,7 +115,7 @@ const Sidebar = () => {
       </div>
 
       {isAdmin && (
-        <div className="pt-4 border-t border-slate-600">
+        <div className="pt-4 border-t border-border-card">
           <SidebarItem
             to="/permisos"
             label="Permisos"

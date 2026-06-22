@@ -124,44 +124,52 @@ const DisponibilidadPage = () => {
   };
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-xl font-bold">Reporte de Disponibilidad de Inventario</h1>
+    <div className="flex flex-col gap-6">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm">
+        <h1 className="text-2xl font-black tracking-tight text-title">Reporte de Disponibilidad de Inventario</h1>
+      </div>
       
-      <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Buscar en todo</label>
+            <label className="block text-sm font-bold text-title mb-2">Buscar en todo</label>
             <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
           </div>
           <div>
-            <label htmlFor="dias-filter" className="block text-sm font-medium text-gray-700 mb-1">Días Disp. ≥</label>
-            <input id="dias-filter" type="number" value={diasFilter} min="0" onChange={(e) => setDiasFilter(e.target.value)} className="w-full p-2 border rounded-md shadow-sm" placeholder="Ej: 30"/>
+            <label htmlFor="dias-filter" className="block text-sm font-bold text-title mb-2">Días Disp. ≥</label>
+            <input id="dias-filter" type="number" value={diasFilter} min="0" onChange={(e) => setDiasFilter(e.target.value)} className="w-full px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all" placeholder="Ej: 30"/>
           </div>
           <div>
-            <label htmlFor="reorder-filter" className="block text-sm font-medium text-gray-700 mb-1">Reorden ≥</label>
-            <input id="reorder-filter" type="number" value={reorderFilter} min="0" onChange={(e) => setReorderFilter(e.target.value)} className="w-full p-2 border rounded-md shadow-sm" placeholder="Ej: 500"/>
+            <label htmlFor="reorder-filter" className="block text-sm font-bold text-title mb-2">Reorden ≥</label>
+            <input id="reorder-filter" type="number" value={reorderFilter} min="0" onChange={(e) => setReorderFilter(e.target.value)} className="w-full px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all" placeholder="Ej: 500"/>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border-card">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">Ordenar por:</span>
-                <button onClick={() => setSortType('alpha')} className={`px-3 py-1 text-sm rounded-full ${sortType === 'alpha' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Descripción (A-Z)</button>
-                <button onClick={() => setSortType('reorder_desc')} className={`px-3 py-1 text-sm rounded-full ${sortType === 'reorder_desc' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Reorden (Mayor a menor)</button>
-                <button onClick={() => setSortType('dias_asc')} className={`px-3 py-1 text-sm rounded-full ${sortType === 'dias_asc' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Días Disp. (Menor a mayor)</button>
+                <span className="text-sm font-bold text-title">Ordenar por:</span>
+                <button onClick={() => setSortType('alpha')} className={`px-4 py-1.5 text-sm font-bold rounded-xl transition-all ${sortType === 'alpha' ? 'bg-button-primary text-white shadow-btn-glow' : 'bg-background-primary text-subtitle hover:text-title border border-border-card'}`}>Descripción (A-Z)</button>
+                <button onClick={() => setSortType('reorder_desc')} className={`px-4 py-1.5 text-sm font-bold rounded-xl transition-all ${sortType === 'reorder_desc' ? 'bg-button-primary text-white shadow-btn-glow' : 'bg-background-primary text-subtitle hover:text-title border border-border-card'}`}>Reorden (Mayor a menor)</button>
+                <button onClick={() => setSortType('dias_asc')} className={`px-4 py-1.5 text-sm font-bold rounded-xl transition-all ${sortType === 'dias_asc' ? 'bg-button-primary text-white shadow-btn-glow' : 'bg-background-primary text-subtitle hover:text-title border border-border-card'}`}>Días Disp. (Menor a mayor)</button>
             </div>
-            <button onClick={resetFilters} className="px-4 py-1 text-sm font-semibold text-red-600 bg-red-100 rounded-full hover:bg-red-200">Limpiar Filtros</button>
+            <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-2.5 bg-background-primary border border-border-card text-title font-bold rounded-xl hover:bg-background-secondary transition-all text-sm shadow-sm">Limpiar Filtros</button>
         </div>
 
-        <div className="flex items-center gap-4 pt-3 border-t">
-            <label htmlFor="group-checkbox" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                <input id="group-checkbox" type="checkbox" checked={groupByProduct} onChange={(e) => setGroupByProduct(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+        <div className="flex items-center gap-4 pt-4 border-t border-border-card">
+            <label htmlFor="group-checkbox" className="flex items-center gap-2 text-sm font-bold text-title cursor-pointer">
+                <input id="group-checkbox" type="checkbox" checked={groupByProduct} onChange={(e) => setGroupByProduct(e.target.checked)} className="h-4 w-4 rounded border-border-card text-button-primary focus:ring-button-primary/20" />
                 Agrupar por producto
             </label>
         </div>
       </div>
 
-      {loading ? <p>Cargando datos...</p> : error ? <p className="text-red-500">{error}</p> : <DataTable type="disponibilidad" data={processedData} />}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-button-primary"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">{error}</div>
+      ) : <DataTable type="disponibilidad" data={processedData} />}
     </div>
   );
 };

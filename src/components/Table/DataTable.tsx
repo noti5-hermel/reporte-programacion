@@ -93,16 +93,20 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
   );
 
   if (loading) {
-    return <p className="text-center text-gray-500">Cargando datos...</p>;
+    return <p className="text-center text-subtitle py-10">Cargando datos...</p>;
   }
 
   if (data.length === 0) {
-    return <p className="text-center text-gray-400">No hay datos disponibles</p>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-background-secondary border border-dashed border-border-card rounded-3xl">
+        <p className="text-subtitle font-bold">No hay datos disponibles</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto border rounded-lg shadow-sm">
+      <div className="overflow-x-auto bg-background-secondary border border-border-card rounded-2xl shadow-sm">
         <table className="min-w-full border-collapse">
           <TableHeader
             columns={columns}
@@ -119,7 +123,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
       </div>
 
       {/* 🔹 Controles de paginación */}
-      <div className="flex flex-wrap justify-between items-center gap-4 text-sm text-gray-700">
+      <div className="flex flex-wrap justify-between items-center gap-4 text-sm font-bold text-subtitle">
         <div className="flex items-center gap-2">
           <span>Filas por página:</span>
           <select
@@ -128,7 +132,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
               setRowsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="border rounded-md p-1"
+            className="border border-border-card bg-background-primary rounded-xl p-1.5 text-title font-bold"
           >
             {[5, 10, 20, 50].map((n) => (
               <option key={n} value={n}>
@@ -142,11 +146,11 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
           <button
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            className="px-2 py-1 border rounded disabled:opacity-40"
+            className="px-3 py-1.5 border border-border-card bg-background-secondary rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-background-primary transition-colors"
           >
             ◀
           </button>
-          <span>
+          <span className="font-bold">
             Página {currentPage} de {totalPages || 1}
           </span>
           <button
@@ -154,7 +158,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
               setCurrentPage((p) => Math.min(p + 1, totalPages || 1))
             }
             disabled={currentPage === totalPages || totalPages === 0}
-            className="px-2 py-1 border rounded disabled:opacity-40"
+            className="px-3 py-1.5 border border-border-card bg-background-secondary rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-background-primary transition-colors"
           >
             ▶
           </button>

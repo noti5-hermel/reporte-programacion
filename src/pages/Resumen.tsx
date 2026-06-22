@@ -72,25 +72,27 @@ export default function Resumen() {
   };
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">Resumen por Producto</h1>
+    <div className="flex flex-col gap-6">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <h1 className="text-2xl font-black tracking-tight text-title">Resumen por Producto</h1>
         <button
           onClick={handleExport}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+          className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover text-white font-bold px-6 py-2.5 rounded-xl shadow-btn-glow hover:shadow-btn-glow-hover transition-all duration-200"
         >
           Exportar a Excel
         </button>
       </div>
-      <div className="flex items-center gap-4 flex-wrap">
-        <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex flex-wrap items-end gap-4">
+        <div className="flex-grow max-w-xs">
+          <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        </div>
         <div className="flex flex-col">
-          <label htmlFor="year-select" className="text-sm font-medium text-gray-600">Año</label>
+          <label htmlFor="year-select" className="text-sm font-bold text-title mb-2">Año</label>
           <select
             id="year-select"
             value={selectedYear || ""}
             onChange={(e) => setSelectedYear(e.target.value ? parseInt(e.target.value) : null)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
           >
             <option value="">Todos</option>
             {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
@@ -99,12 +101,12 @@ export default function Resumen() {
           </select>
         </div>
         <div className="flex flex-col">
-          <label htmlFor="month-select" className="text-sm font-medium text-gray-600">Mes</label>
+          <label htmlFor="month-select" className="text-sm font-bold text-title mb-2">Mes</label>
           <select
             id="month-select"
             value={selectedMonth || ""}
             onChange={(e) => setSelectedMonth(e.target.value ? parseInt(e.target.value) : null)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
           >
             <option value="">Todos</option>
             {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((name, index) => (
@@ -114,16 +116,18 @@ export default function Resumen() {
         </div>
         <button
           onClick={handleClearFilters}
-          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          className="flex items-center gap-2 px-4 py-2.5 bg-background-primary border border-border-card text-title font-bold rounded-xl hover:bg-background-secondary transition-all text-sm shadow-sm"
         >
           Limpiar Filtros
         </button>
       </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-button-primary"></div>
+        </div>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">{error}</div>
       ) : (
         <DataTable type="resumen" data={filteredData} />
       )}

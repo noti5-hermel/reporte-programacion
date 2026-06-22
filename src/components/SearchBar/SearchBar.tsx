@@ -14,7 +14,7 @@ export const SearchBar = ({
   return (
     <div className="relative flex-grow">
       <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-subtitle"
         size={20}
       />
       <input
@@ -22,7 +22,7 @@ export const SearchBar = ({
         placeholder={placeholder}
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full pl-10 pr-4 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-medium text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
       />
     </div>
   );

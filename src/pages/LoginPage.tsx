@@ -9,8 +9,8 @@ export default function LoginPage() {
 
   if (authServiceAvailable === null) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <p className="text-gray-500 font-medium">Verificando disponibilidad del servicio de autenticación...</p>
+      <div className="flex items-center justify-center h-screen bg-background-primary">
+        <p className="text-subtitle font-bold">Verificando disponibilidad del servicio de autenticación...</p>
       </div>
     );
   }
@@ -18,8 +18,8 @@ export default function LoginPage() {
   if (authServiceAvailable === false) return <LoginForm />;
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-50">
-      <p className="text-gray-500 font-medium">Redirigiendo al inicio de sesión...</p>
+    <div className="flex items-center justify-center h-screen bg-background-primary">
+      <p className="text-subtitle font-bold">Redirigiendo al inicio de sesión...</p>
     </div>
   );
 }

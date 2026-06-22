@@ -16,7 +16,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   onSort,
 }) => {
   return (
-    <thead className="bg-gray-100 text-gray-700">
+    <thead className="bg-background-primary text-subtitle">
       <tr>
         {columns.map((col) => {
           const normalized = col.toLowerCase().replace(/\s+/g, "");
@@ -26,15 +26,15 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             <th
               key={col}
               onClick={() => onSort && onSort(col)}
-              className="px-3 py-2 text-left text-sm font-semibold border-b cursor-pointer select-none hover:bg-gray-50"
+              className="px-3 py-3 text-left text-xs font-bold tracking-wider uppercase border-b border-border-card cursor-pointer select-none hover:bg-background-secondary transition-colors"
             >
               <div className="flex items-center gap-1">
                 {col}
                 {isSorted &&
                   (sortDirection === "asc" ? (
-                    <ArrowUp className="w-3 h-3" />
+                    <ArrowUp className="w-3 h-3 text-button-primary" />
                   ) : (
-                    <ArrowDown className="w-3 h-3" />
+                    <ArrowDown className="w-3 h-3 text-button-primary" />
                   ))}
               </div>
             </th>
