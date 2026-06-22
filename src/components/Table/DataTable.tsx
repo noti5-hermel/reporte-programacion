@@ -8,7 +8,7 @@ interface DataItem {
 }
 
 interface DataTableProps {
-  type: "general" | "resumen" | "disponibilidad";
+  type: "general" | "resumen" | "disponibilidad" | "rendimiento" | "operators";
   data?: DataItem[];
   loading?: boolean;
 }
@@ -36,6 +36,18 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
         return [
           "Fecha", "Código", "Descripción", "Lote", "Tipo", "Actividad",
           "Productividad", "Cantidad", "Minutos(horas)", "Personas", "Total Horas",
+        ];
+      case "operators":
+        return [
+          "Operario", "Cargo", "Equipos", "Días Activos", "Tareas Comp.", "Cant. Real", "T. Real (min)", "Eficiencia", "Prod. Real (und/h)"
+        ];
+      case "rendimiento":
+        return [
+          "Equipo", "Código", "Descripción", "Material", "Lote",
+          "Cant. Plan.", "Cant. Real",
+          "Inicio Planif.", "Final Planif.", "T. Planif.",
+          "Inicio Real", "Final Real", "T. Real",
+          "Rendimiento", "Comentarios"
         ];
       case "resumen":
       default:

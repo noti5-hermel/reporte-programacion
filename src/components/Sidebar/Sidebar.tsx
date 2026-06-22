@@ -1,83 +1,129 @@
-import { useState } from "react";
-import {SidebarItem} from "./SidebarItem";
-import { LogOut, ChevronLeft, TableProperties, ClipboardList, GitCompareArrows, FileText, PackageCheck } from "lucide-react"; // Añadir nuevo ícono
-import { useAuth } from "../../contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { SidebarItem } from "./SidebarItem";
+import { useAuth } from "../../hooks/useAuth";
+import { permissionService, REPORT_OPTIONS } from "../../services/permissionService";
+import {
+  ChevronLeft,
+  TableProperties,
+  ClipboardList,
+  GitCompareArrows,
+  FileText,
+  PackageCheck,
+  Activity,
+  Shield,
+} from "lucide-react";
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: JSX.Element;
+  reportKey: string;
+}
+
+const ALL_ITEMS: NavItem[] = [
+  { to: "/general", label: "Tabla General", icon: <TableProperties />, reportKey: "general" },
+  { to: "/rendimiento", label: "Rendimiento", icon: <Activity />, reportKey: "rendimiento" },
+  { to: "/resumen", label: "Tabla Resumida", icon: <ClipboardList />, reportKey: "resumen" },
+  { to: "/comparacion", label: "Comparación", icon: <GitCompareArrows />, reportKey: "comparacion" },
+  { to: "/formato", label: "Formato", icon: <FileText />, reportKey: "formato" },
+  { to: "/disponibilidad", label: "Disponibilidad", icon: <PackageCheck />, reportKey: "disponibilidad" },
+];
+
+function useUserReports() {
+  const { user } = useAuth();
+  const [allowedReports, setAllowedReports] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!user?.username) return;
+
+    const isAdmin = user.role === "ADMIN";
+    if (isAdmin) {
+      setAllowedReports(new Set(REPORT_OPTIONS.map((r) => r.key)));
+      return;
+    }
+
+    const cached = localStorage.getItem("user_reports");
+    if (cached) {
+      try {
+        setAllowedReports(new Set(JSON.parse(cached)));
+        return;
+      } catch {}
+    }
+
+    permissionService
+      .getMyPermissions()
+      .then((res) => {
+        const reports = new Set(res.reports);
+        setAllowedReports(reports);
+        localStorage.setItem("user_reports", JSON.stringify([...reports]));
+      })
+      .catch(() => setAllowedReports(new Set()));
+  }, [user?.username, user?.role]);
+
+  return allowedReports;
+}
 
 const Sidebar = () => {
+  const { user } = useAuth();
+  const allowedReports = useUserReports();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { logout } = useAuth();
-  
+
+  const isAdmin = user?.role === "ADMIN";
+
+  const visibleItems = ALL_ITEMS.filter(
+    (item) => isAdmin || allowedReports?.has(item.reportKey)
+  );
+
   return (
     <aside
-      className={`min-h-screen sticky top-0 bg-slate-800 text-white p-4 transition-all duration-300 ease-in-out flex flex-col justify-between flex-shrink-0 ${
-        isCollapsed ? "w-20" : "w-64"
-      }`}
+      className={`min-h-screen sticky top-0 bg-slate-800 text-white p-4 transition-all duration-300 ease-in-out flex flex-col justify-between flex-shrink-0 ${isCollapsed ? "w-20" : "w-64"
+        }`}
     >
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 mt-4">
           <h2
-            className={`text-xl font-bold transition-opacity duration-300 ${
-              isCollapsed ? "opacity-0" : "opacity-100"
-            }`}
+            className={`text-xl font-bold transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"
+              }`}
           >
             Panel
           </h2>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600"
+            className={`absolute z-50 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white shadow-md border border-slate-600 transition-all ${isCollapsed
+                ? "top-[22px] "
+                : "top-4 right-1"
+              }`}
           >
             <ChevronLeft
-              className={`transition-transform duration-300 ${
-                isCollapsed ? "rotate-180" : ""
-              }`}
+              className={`transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""
+                }`}
             />
           </button>
         </div>
 
         <nav className="flex flex-col gap-2">
-          <SidebarItem
-            to="/general"
-            label="Tabla General"
-            isCollapsed={isCollapsed}
-            icon={<TableProperties />}
-          />
-          <SidebarItem
-            to="/resumen"
-            label="Tabla Resumida"
-            isCollapsed={isCollapsed}
-            icon={<ClipboardList />}
-          />
-          <SidebarItem
-            to="/comparacion"
-            label="Comparación"
-            isCollapsed={isCollapsed}
-            icon={<GitCompareArrows />}
-          />
-           <SidebarItem
-            to="/formato"
-            label="Formato"
-            isCollapsed={isCollapsed}
-            icon={<FileText />}
-          />
-          {/* Añadir nuevo enlace a Disponibilidad */}
-          <SidebarItem
-            to="/disponibilidad"
-            label="Disponibilidad"
-            isCollapsed={isCollapsed}
-            icon={<PackageCheck />}
-          />
+          {visibleItems.map((item) => (
+            <SidebarItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              isCollapsed={isCollapsed}
+              icon={item.icon}
+            />
+          ))}
         </nav>
       </div>
 
-      <div>
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-4 p-2 rounded-lg hover:bg-slate-700 border-t border-slate-700 pt-4 mt-2"
-        >
-          <LogOut />
-          {!isCollapsed && <span>Cerrar Sesión</span>}
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="pt-4 border-t border-slate-600">
+          <SidebarItem
+            to="/permisos"
+            label="Permisos"
+            isCollapsed={isCollapsed}
+            icon={<Shield />}
+          />
+        </div>
+      )}
     </aside>
   );
 };

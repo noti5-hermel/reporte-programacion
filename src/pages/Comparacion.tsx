@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect} from "react";
+import { useState, useMemo, useEffect } from "react";
 import { UploadCloud } from "lucide-react";
 import * as XLSX from "xlsx";
-import { API_BASE_URL } from "../api/config";
+import { compareService } from "../services/compareService";
 
 type ComparisonRow = {
   codigo: string;
@@ -29,40 +29,26 @@ export default function Comparacion() {
       return;
     }
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("No estás autenticado. Por favor, inicia sesión.");
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/?compareDate=${encodeURIComponent(fecha)}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        const transformedData: ComparisonRow[] = Array.isArray(data)
-          ? data.map((item: any) => {
-              let diffPercent: number | null = null;
-              if (item.tiempo && item.total_tiempo_real !== 0) {
-                const diff = (item.tiempo - item.total_tiempo_real) / item.tiempo;
-                diffPercent = diff * 10;
-              }
-              return {
-                codigo: item.code || "",
-                descripcion: item.description || "",
-                tipo: item.tipo || "",
-                numeroPersonas: item.numero_personas || 0,
-                totalTiempoReal: Number(item.total_tiempo_real) || 0,
-                unitsReq: Number(item.tiempo) || 0,
-                diffPercent: diffPercent,
-              };
-            })
-          : [];
-        setComparisonData(transformedData);
-      } else {
-        console.error("Error al cargar los registros de comparación");
-        setComparisonData([]);
-      }
+      const data = await compareService.getCompareRecords(fecha);
+      const transformedData: ComparisonRow[] = Array.isArray(data)
+        ? data.map((item: any) => {
+          let diffPercent: number | null = null;
+          if (item.tiempo && item.total_tiempo_real !== 0) {
+            const diff = (item.tiempo - item.total_tiempo_real) / item.tiempo;
+            diffPercent = diff * 10;
+          }
+          return {
+            codigo: item.code || "",
+            descripcion: item.description || "",
+            tipo: item.tipo || "",
+            numeroPersonas: item.numero_personas || 0,
+            totalTiempoReal: Number(item.total_tiempo_real) || 0,
+            unitsReq: Number(item.tiempo) || 0,
+            diffPercent: diffPercent,
+          };
+        })
+        : [];
+      setComparisonData(transformedData);
     } catch (error) {
       console.error("Error al cargar los registros de comparación:", error);
       setComparisonData([]);
@@ -84,22 +70,9 @@ export default function Comparacion() {
 
   const loadFechas = async () => {
     setLoadingFechas(true);
-    try { 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setLoadingFechas(false);
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setFechasDisponibles(Array.isArray(data) ? data : []);
-      } else {
-        console.error("Error al cargar las fechas");
-      }
+    try {
+      const data = await compareService.getHistoricoFechas();
+      setFechasDisponibles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al cargar las fechas:", error);
     } finally {
@@ -207,12 +180,6 @@ export default function Comparacion() {
     }
     setSaving(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("No estás autenticado. Por favor, inicia sesión.");
-        setSaving(false);
-        return;
-      }
       const compareDate = new Date().toISOString();
       const dataToSend = comparisonData.map((row) => ({
         codigo: row.codigo,
@@ -224,44 +191,25 @@ export default function Comparacion() {
         diferencia: row.totalTiempoReal - row.unitsReq,
         compareDate: compareDate,
       }));
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(dataToSend),
-      });
-      if (response.ok) {
-        try {
-          await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ fecha: compareDate }),
-          });
-        } catch (fechaError) {
-          console.error("Error al guardar la fecha en el historico:", fechaError);
-        }
-        setResumenFile(null);
-        setDocumentoFile(null);
-        setComparisonData([]);
-        setSelectedTipo("");
-        const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
-        const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
-        if (resumenInput) resumenInput.value = "";
-        if (documentoInput) documentoInput.value = "";
-        await loadFechas();
-        alert("Comparación guardada exitosamente.");
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        alert(`Error al guardar la comparación: ${errorData.message || response.statusText}`);
+      await compareService.createCompareRecords(dataToSend);
+      try {
+        await compareService.createHistoricoFecha(compareDate);
+      } catch (fechaError) {
+        console.error("Error al guardar la fecha en el historico:", fechaError);
       }
-    } catch (error) {
+      setResumenFile(null);
+      setDocumentoFile(null);
+      setComparisonData([]);
+      setSelectedTipo("");
+      const resumenInput = document.getElementById("resumen-upload") as HTMLInputElement;
+      const documentoInput = document.getElementById("documento-upload") as HTMLInputElement;
+      if (resumenInput) resumenInput.value = "";
+      if (documentoInput) documentoInput.value = "";
+      await loadFechas();
+      alert("Comparación guardada exitosamente.");
+    } catch (error: any) {
       console.error("Error al guardar la comparación:", error);
-      alert("Hubo un error al guardar la comparación. Ver consola para más detalles.");
+      alert(`Hubo un error al guardar la comparación: ${error.message || error}`);
     } finally {
       setSaving(false);
     }
@@ -418,7 +366,7 @@ export default function Comparacion() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row,index) => {
+                {filteredData.map((row, index) => {
                   const isOverThreshold = row.diffPercent !== null && row.diffPercent > 25;
                   return (
                     <tr key={`${row.codigo}-${index}`} className="hover:bg-gray-50">

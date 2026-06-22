@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { Select } from '../components/Select';
 import { processManoDeObra } from './FormatoPage/processors/manoDeObraProcessor';
 import { processDiasDisponibles } from './FormatoPage/processors/diasDisponiblesProcessor';
-import { API_BASE_URL } from '../api/config';
+import { availableService } from '../services/availableService';
 
 const FormatoPage: FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -111,24 +111,8 @@ const FormatoPage: FC = () => {
             color: '#FFFFFF'
           }));
 
-          const token = localStorage.getItem("token");
-          if (!token) throw new Error("No estás autenticado.");
-
-          const deleteResponse = await fetch(`${API_BASE_URL}/api/v1/available/`, {
-            method: 'DELETE',
-            headers: { "Authorization": `Bearer ${token}` },
-          });
-          if (!deleteResponse.ok) throw new Error("Fallo al borrar los datos antiguos.");
-
-          const postResponse = await fetch(`${API_BASE_URL}/api/v1/available/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
-            body: JSON.stringify(jsonData),
-          });
-          if (!postResponse.ok) {
-            const errorData = await postResponse.json();
-            throw new Error(`Fallo al insertar los nuevos datos: ${errorData.detail || "Error del servidor"}`);
-          }
+          await availableService.deleteAllAvailableItems();
+          await availableService.createAvailableItems(jsonData as any);
 
           successMessage = "¡Éxito! La base de datos ha sido actualizada y el reporte se está descargando.";
           break;

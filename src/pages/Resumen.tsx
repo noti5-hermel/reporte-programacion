@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-import { API_BASE_URL } from "../api/config";
+import { productivityService } from "../services/productivityService";
 import * as XLSX from "xlsx";
 
 export default function Resumen() {
@@ -15,43 +15,21 @@ export default function Resumen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        let url = `${API_BASE_URL}/api/v1/reports/task-performance-group`;
-        const params = new URLSearchParams();
-        if (selectedYear !== null) {
-          params.append('year', selectedYear.toString());
-        }
-        if (selectedMonth !== null) {
-          params.append('month', selectedMonth.toString());
-        }
-        if (params.toString()) {
-          url += `?${params.toString()}`;
-        }
-        const response = await fetch(url, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          // Transform the API data to match the expected format
-          const transformed = Array.isArray(result)
-            ? result.map((item: any) => ({
-                codigo: item.code,
-                descripcion: item.description,
-                tipo: item.type,
-                sumaTotalHoras: item.sum_hours,
-                sumCantidad: item.sum_quantity,
-                promTiempoProducto: item.avg_time_per_product,
-                numeroPersonas: item.people,
-                totalTiempoReal: item.final_metric,
-              }))
-            : [];
-          setData(transformed);
-        } else {
-          setError("Failed to fetch data");
-        }
+        const result = await productivityService.getTaskPerformanceGroup(selectedYear, selectedMonth);
+        // Transform the API data to match the expected format
+        const transformed = Array.isArray(result)
+          ? result.map((item: any) => ({
+              codigo: item.code,
+              descripcion: item.description,
+              tipo: item.type,
+              sumaTotalHoras: item.sum_hours,
+              sumCantidad: item.sum_quantity,
+              promTiempoProducto: item.avg_time_per_product,
+              numeroPersonas: item.people,
+              totalTiempoReal: item.final_metric,
+            }))
+          : [];
+        setData(transformed);
       } catch (err) {
         setError("Error fetching data");
       } finally {
