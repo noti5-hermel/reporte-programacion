@@ -259,92 +259,93 @@ export default function Comparacion() {
   }, [comparisonData, selectedTipo]);
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Comparación de Archivos Excel</h1>
-      <div className="flex items-center space-x-4">
-        <label htmlFor="date-select" className="text-lg font-semibold">
-          Selecciona una fecha:
-        </label>
-        <select
-          id="date-select"
-          value={selectedDate}
-          onChange={handleDateChange}
-          className="p-2 border border-gray-300 rounded-lg"
-          disabled={loadingFechas}
-        >
-          <option value="">--Selecciona una fecha--</option>
-          {fechasDisponibles.map((item, index) => {
-            const fecha = new Date(item.fecha);
-            const fechaFormateada = fecha.toLocaleDateString('es-ES', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            });
-            return (
-              <option key={item.id || index} value={item.fecha}>
-                {fechaFormateada}
-              </option>
-            );
-          })}
-        </select>
-        <label htmlFor="resumen-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
-          <UploadCloud className="inline-block mr-2" />
+    <div className="flex flex-col gap-6">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm">
+        <h1 className="text-2xl font-black tracking-tight text-title">Comparación de Archivos Excel</h1>
+      </div>
+      
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex flex-wrap items-end gap-4">
+        <div className="flex flex-col">
+          <label htmlFor="date-select" className="text-sm font-bold text-title mb-2">Selecciona una fecha:</label>
+          <select
+            id="date-select"
+            value={selectedDate}
+            onChange={handleDateChange}
+            className="px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
+            disabled={loadingFechas}
+          >
+            <option value="">--Selecciona una fecha--</option>
+            {fechasDisponibles.map((item, index) => {
+              const fecha = new Date(item.fecha);
+              const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              });
+              return (
+                <option key={item.id || index} value={item.fecha}>
+                  {fechaFormateada}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+        <label htmlFor="resumen-upload" className="flex items-center gap-2 px-4 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title cursor-pointer hover:bg-background-secondary transition-all shadow-sm">
+          <UploadCloud className="w-4 h-4" />
           {resumenFile ? resumenFile.name : "Importar Resumen"}
           <input id="resumen-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'resumen')} />
         </label>
-        <label htmlFor="documento-upload" className="p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100">
-          <UploadCloud className="inline-block mr-2" />
+        <label htmlFor="documento-upload" className="flex items-center gap-2 px-4 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title cursor-pointer hover:bg-background-secondary transition-all shadow-sm">
+          <UploadCloud className="w-4 h-4" />
           {documentoFile ? documentoFile.name : "Importar Documento Real"}
           <input id="documento-upload" type="file" className="hidden" onChange={(e) => handleFileChange(e, 'documento')} />
         </label>
         {resumenFile && documentoFile && (
-          <button onClick={handleComparison} className="p-2 border border-gray-300 rounded-lg bg-blue-500 text-white hover:bg-blue-600">
+          <button onClick={handleComparison} className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover text-white font-bold px-6 py-2.5 rounded-xl shadow-btn-glow hover:shadow-btn-glow-hover transition-all duration-200">
             Realizar Comparación
           </button>
         )}
       </div>
 
       {comparisonData.length > 0 && (
-        <div className="mt-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
+        <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm">
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+            <h2 className="text-lg font-bold text-title">
               Resultados de la Comparación
             </h2>
-            <div className="flex items-center space-x-4">
-              <label htmlFor="tipo-filter" className="text-sm font-medium">Filtrar por Tipo:</label>
+            <div className="flex flex-wrap items-center gap-3">
+              <label htmlFor="tipo-filter" className="text-sm font-bold text-title">Filtrar por Tipo:</label>
               <select
                 id="tipo-filter"
                 value={selectedTipo}
                 onChange={(e) => setSelectedTipo(e.target.value)}
-                className="p-2 border border-gray-300 rounded-lg"
+                className="px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
               >
                 <option value="">Todos los tipos</option>
                 {tiposUnicos.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
               </select>
 
-              {/* Si se está viendo un HISTÓRICO, se muestra el botón DESCARGAR */}
               {selectedDate && (
                 <button
                   onClick={handleExport}
-                  className="p-2 border border-green-300 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                  className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover text-white font-bold px-4 py-2.5 rounded-xl shadow-btn-glow hover:shadow-btn-glow-hover transition-all duration-200 text-sm"
                 >
                   Descargar Excel
                 </button>
               )}
 
-              {/* Si es una NUEVA comparación, se muestran CANCELAR y GUARDAR */}
               {!selectedDate && (
                 <>
                   <button
                     onClick={handleClearComparison}
-                    className="p-2 border border-red-300 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-background-primary border border-border-card text-title font-bold rounded-xl hover:bg-background-secondary transition-all text-sm shadow-sm"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleSaveComparison}
                     disabled={saving}
-                    className="p-2 border border-gray-300 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400"
+                    className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white font-bold px-4 py-2.5 rounded-xl shadow-btn-glow hover:shadow-btn-glow-hover transition-all duration-200 text-sm"
                   >
                     {saving ? "Guardando..." : "Guardar Comparación"}
                   </button>
@@ -353,30 +354,30 @@ export default function Comparacion() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
+            <table className="min-w-full bg-background-secondary border border-border-card rounded-xl">
               <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b">Código</th>
-                  <th className="py-2 px-4 border-b">Descripción</th>
-                  <th className="py-2 px-4 border-b">Tipo</th>
-                  <th className="py-2 px-4 border-b">Número de Personas</th>
-                  <th className="py-2 px-4 border-b">Total Tiempo Real (Resumen)</th>
-                  <th className="py-2 px-4 border-b">Units Req (Documento Real)</th>
-                  <th className="py-2 px-4 border-b">% Diferencia</th>
+                <tr className="bg-background-primary text-subtitle text-xs uppercase tracking-wider">
+                  <th className="px-4 py-3 border-b border-border-card text-left font-bold">Código</th>
+                  <th className="px-4 py-3 border-b border-border-card text-left font-bold">Descripción</th>
+                  <th className="px-4 py-3 border-b border-border-card text-left font-bold">Tipo</th>
+                  <th className="px-4 py-3 border-b border-border-card text-right font-bold">Número de Personas</th>
+                  <th className="px-4 py-3 border-b border-border-card text-right font-bold">Total Tiempo Real (Resumen)</th>
+                  <th className="px-4 py-3 border-b border-border-card text-right font-bold">Units Req (Documento Real)</th>
+                  <th className="px-4 py-3 border-b border-border-card text-right font-bold">% Diferencia</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.map((row, index) => {
                   const isOverThreshold = row.diffPercent !== null && row.diffPercent > 25;
                   return (
-                    <tr key={`${row.codigo}-${index}`} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b">{row.codigo}</td>
-                      <td className="py-2 px-4 border-b">{row.descripcion}</td>
-                      <td className="py-2 px-4 border-b">{row.tipo}</td>
-                      <td className="py-2 px-4 border-b">{row.numeroPersonas}</td>
-                      <td className="py-2 px-4 border-b">{row.totalTiempoReal.toFixed(3)}</td>
-                      <td className="py-2 px-4 border-b">{row.unitsReq.toFixed(3)}</td>
-                      <td className={`py-2 px-4 border-b ${isOverThreshold ? "text-red-600 font-semibold" : ""}`}>
+                    <tr key={`${row.codigo}-${index}`} className="hover:bg-background-primary transition-colors">
+                      <td className="px-4 py-2.5 border-b border-border-card">{row.codigo}</td>
+                      <td className="px-4 py-2.5 border-b border-border-card">{row.descripcion}</td>
+                      <td className="px-4 py-2.5 border-b border-border-card">{row.tipo}</td>
+                      <td className="px-4 py-2.5 border-b border-border-card text-right">{row.numeroPersonas}</td>
+                      <td className="px-4 py-2.5 border-b border-border-card text-right">{row.totalTiempoReal.toFixed(3)}</td>
+                      <td className="px-4 py-2.5 border-b border-border-card text-right">{row.unitsReq.toFixed(3)}</td>
+                      <td className={`px-4 py-2.5 border-b border-border-card text-right font-bold ${isOverThreshold ? "text-red-600" : ""}`}>
                         {row.diffPercent !== null ? `${row.diffPercent.toFixed(2)}%` : "-"}
                       </td>
                     </tr>

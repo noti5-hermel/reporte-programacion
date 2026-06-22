@@ -19,17 +19,20 @@ const formatDate = (dateString: string) => {
 
 const TableRow: React.FC<RowProps> = ({ type, row }) => {
 
+  const baseRowClass = "hover:bg-background-primary text-sm transition-colors";
+  const cellClass = "px-3 py-2.5 border-b border-border-card";
+
   // --- Caso para la tabla de Disponibilidad ---
   if (type === "disponibilidad") {
     return (
-      <tr className="hover:bg-gray-50 text-sm">
-        <td className="px-3 py-2 border-b font-mono">{row.codigo}</td>
-        <td className="px-3 py-2 border-b">{row.description}</td>
-        <td className="px-3 py-2 border-b text-right">{row.disponible}</td>
-        <td className="px-3 py-2 border-b text-right">{row.minimo}</td>
-        <td className="px-3 py-2 border-b text-right">{row.reorder}</td>
-        <td className="px-3 py-2 border-b text-right font-semibold">{row.dias_disponibles}</td>
-        <td className="px-3 py-2 border-b text-center">{formatDate(row.date_upload)}</td>
+      <tr className={baseRowClass}>
+        <td className={`${cellClass} font-mono`}>{row.codigo}</td>
+        <td className={cellClass}>{row.description}</td>
+        <td className={`${cellClass} text-right`}>{row.disponible}</td>
+        <td className={`${cellClass} text-right`}>{row.minimo}</td>
+        <td className={`${cellClass} text-right`}>{row.reorder}</td>
+        <td className={`${cellClass} text-right font-bold`}>{row.dias_disponibles}</td>
+        <td className={`${cellClass} text-center`}>{formatDate(row.date_upload)}</td>
       </tr>
     );
   }
@@ -37,18 +40,18 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
   // --- Caso para la tabla General ---
   if (type === "general") {
     return (
-      <tr className="hover:bg-gray-50">
-        <td className="px-3 py-2 border-b">{row.fecha}</td>
-        <td className="px-3 py-2 border-b">{row.codigo}</td>
-        <td className="px-3 py-2 border-b">{row.descripcion}</td>
-        <td className="px-3 py-2 border-b">{row.lote}</td>
-        <td className="px-3 py-2 border-b">{row.tipo}</td>
-        <td className="px-3 py-2 border-b">{row.actividad}</td>
-        <td className="px-3 py-2 border-b text-right">{row.productividad}</td>
-        <td className="px-3 py-2 border-b text-right">{row.cantidad}</td>
-        <td className="px-3 py-2 border-b text-right">{row.minutos}</td>
-        <td className="px-3 py-2 border-b text-right">{row.personas}</td>
-        <td className="px-3 py-2 border-b text-right">{row.totalHoras}</td>
+      <tr className={baseRowClass}>
+        <td className={cellClass}>{row.fecha}</td>
+        <td className={cellClass}>{row.codigo}</td>
+        <td className={cellClass}>{row.descripcion}</td>
+        <td className={cellClass}>{row.lote}</td>
+        <td className={cellClass}>{row.tipo}</td>
+        <td className={cellClass}>{row.actividad}</td>
+        <td className={`${cellClass} text-right`}>{row.productividad}</td>
+        <td className={`${cellClass} text-right`}>{row.cantidad}</td>
+        <td className={`${cellClass} text-right`}>{row.minutos}</td>
+        <td className={`${cellClass} text-right`}>{row.personas}</td>
+        <td className={`${cellClass} text-right`}>{row.totalHoras}</td>
       </tr>
     );
   }
@@ -56,15 +59,15 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
   // --- Caso para la tabla de Resumen ---
   if (type === "resumen") {
     return (
-      <tr className="hover:bg-gray-50 text-sm">
-        <td className="px-3 py-2 border-b">{row.codigo}</td>
-        <td className="px-3 py-2 border-b">{row.descripcion}</td>
-        <td className="px-3 py-2 border-b">{row.tipo}</td>
-        <td className="px-3 py-2 border-b text-right">{row.sumaTotalHoras}</td>
-        <td className="px-3 py-2 border-b text-right">{row.sumCantidad}</td>
-        <td className="px-3 py-2 border-b text-right">{row.promTiempoProducto}</td>
-        <td className="px-3 py-2 border-b text-right">{row.numeroPersonas}</td>
-        <td className="px-3 py-2 border-b text-right">{row.totalTiempoReal}</td>
+      <tr className={baseRowClass}>
+        <td className={cellClass}>{row.codigo}</td>
+        <td className={cellClass}>{row.descripcion}</td>
+        <td className={cellClass}>{row.tipo}</td>
+        <td className={`${cellClass} text-right`}>{row.sumaTotalHoras}</td>
+        <td className={`${cellClass} text-right`}>{row.sumCantidad}</td>
+        <td className={`${cellClass} text-right`}>{row.promTiempoProducto}</td>
+        <td className={`${cellClass} text-right`}>{row.numeroPersonas}</td>
+        <td className={`${cellClass} text-right`}>{row.totalTiempoReal}</td>
       </tr>
     );
   }
@@ -76,18 +79,18 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
     const productivity = row.real_productivity;
 
     return (
-      <tr className="hover:bg-gray-50 text-sm">
-        <td className="px-3 py-2 border-b font-semibold">{row.operator_name || row.username || "-"}</td>
-        <td className="px-3 py-2 border-b">{row.job_title || "-"}</td>
-        <td className="px-3 py-2 border-b">{row.teams || "-"}</td>
-        <td className="px-3 py-2 border-b text-right">{row.active_days || 0}</td>
-        <td className="px-3 py-2 border-b text-right">{row.completed_tasks || 0}</td>
-        <td className="px-3 py-2 border-b text-right">{row.total_real_quantity || 0}</td>
-        <td className="px-3 py-2 border-b text-right font-mono">{row.total_real_minutes || 0}</td>
-        <td className={`px-3 py-2 border-b text-right font-bold ${rateColor}`}>
+      <tr className={baseRowClass}>
+        <td className={`${cellClass} font-bold`}>{row.operator_name || row.username || "-"}</td>
+        <td className={cellClass}>{row.job_title || "-"}</td>
+        <td className={cellClass}>{row.teams || "-"}</td>
+        <td className={`${cellClass} text-right`}>{row.active_days || 0}</td>
+        <td className={`${cellClass} text-right`}>{row.completed_tasks || 0}</td>
+        <td className={`${cellClass} text-right`}>{row.total_real_quantity || 0}</td>
+        <td className={`${cellClass} text-right font-mono`}>{row.total_real_minutes || 0}</td>
+        <td className={`${cellClass} text-right font-bold ${rateColor}`}>
           {completionRate.toFixed(1)}%
         </td>
-        <td className="px-3 py-2 border-b text-right font-mono">
+        <td className={`${cellClass} text-right font-mono`}>
           {productivity != null ? productivity.toFixed(2) : "-"}
         </td>
       </tr>
@@ -97,8 +100,8 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
   // --- Caso para la tabla de Rendimiento ---
   const rend = row.rendimiento;
   const rendColor = rend !== null && rend !== undefined
-    ? (rend >= 85 ? 'text-green-600' : rend >= 60 ? 'text-yellow-600' : 'text-red-600')
-    : 'text-gray-400';
+    ? (rend >= 85 ? 'text-green-600 font-bold' : rend >= 60 ? 'text-yellow-600 font-bold' : 'text-red-600 font-bold')
+    : 'text-subtitle';
   const formatTime = (val: string | null) => {
     if (!val) return "-";
     if (val.includes("T")) return val.slice(11, 19);
@@ -107,24 +110,24 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
   };
 
   return (
-    <tr className="hover:bg-gray-50 text-sm">
-      <td className="px-3 py-2 border-b font-semibold">{row.equipo || "-"}</td>
-      <td className="px-3 py-2 border-b">{row.codigo || "-"}</td>
-      <td className="px-3 py-2 border-b">{row.description || "-"}</td>
-      <td className="px-3 py-2 border-b">{row.material || "-"}</td>
-      <td className="px-3 py-2 border-b">{row.lote || "-"}</td>
-      <td className="px-3 py-2 border-b text-right">{row.cantidad_planificada ?? "-"}</td>
-      <td className="px-3 py-2 border-b text-right">{row.cantidad_real ?? "-"}</td>
-      <td className="px-3 py-2 border-b text-center">{formatTime(row.inicio_planificado)}</td>
-      <td className="px-3 py-2 border-b text-center">{formatTime(row.final_planificado)}</td>
-      <td className="px-3 py-2 border-b text-right font-mono">{row.tiempo_planificado ?? "-"}</td>
-      <td className="px-3 py-2 border-b text-center">{formatTime(row.inicio_real)}</td>
-      <td className="px-3 py-2 border-b text-center">{formatTime(row.final_real)}</td>
-      <td className="px-3 py-2 border-b text-right font-mono">{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : "-"}</td>
-      <td className={`px-3 py-2 border-b text-right font-bold ${rendColor}`}>
+    <tr className={baseRowClass}>
+      <td className={`${cellClass} font-bold`}>{row.equipo || "-"}</td>
+      <td className={cellClass}>{row.codigo || "-"}</td>
+      <td className={cellClass}>{row.description || "-"}</td>
+      <td className={cellClass}>{row.material || "-"}</td>
+      <td className={cellClass}>{row.lote || "-"}</td>
+      <td className={`${cellClass} text-right`}>{row.cantidad_planificada ?? "-"}</td>
+      <td className={`${cellClass} text-right`}>{row.cantidad_real ?? "-"}</td>
+      <td className={`${cellClass} text-center text-xs`}>{formatTime(row.inicio_planificado)}</td>
+      <td className={`${cellClass} text-center text-xs`}>{formatTime(row.final_planificado)}</td>
+      <td className={`${cellClass} text-right font-mono`}>{row.tiempo_planificado ?? "-"}</td>
+      <td className={`${cellClass} text-center text-xs`}>{formatTime(row.inicio_real)}</td>
+      <td className={`${cellClass} text-center text-xs`}>{formatTime(row.final_real)}</td>
+      <td className={`${cellClass} text-right font-mono`}>{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : "-"}</td>
+      <td className={`${cellClass} text-right ${rendColor}`}>
         {rend != null ? `${rend.toFixed(2)}%` : "N/A"}
       </td>
-      <td className="px-3 py-2 border-b text-xs max-w-[150px] truncate" title={row.comentarios || ""}>
+      <td className={`${cellClass} text-xs max-w-[150px] truncate`} title={row.comentarios || ""}>
         {row.comentarios || "-"}
       </td>
     </tr>

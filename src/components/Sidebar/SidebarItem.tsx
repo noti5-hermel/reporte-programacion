@@ -13,10 +13,10 @@ export const SidebarItem = ({ to, label, isCollapsed, icon }: SidebarItemProps) 
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+        `flex items-center px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 ${
           isActive
-            ? "bg-slate-600 text-white"
-            : "text-gray-300 hover:bg-slate-700 hover:text-white"
+            ? "bg-button-primary text-white shadow-btn-glow"
+            : "text-subtitle hover:bg-background-primary hover:text-title"
         } ${isCollapsed ? "justify-center" : ""}`
       }
     >

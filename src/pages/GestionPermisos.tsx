@@ -102,25 +102,25 @@ export default function GestionPermisos() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-background-secondary rounded-2xl border border-border-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-100 border-b border-slate-200">
-                <th className="text-left px-4 py-3 font-semibold text-slate-700">Usuario</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-700">Rol</th>
+              <tr className="bg-background-primary border-b border-border-card">
+                <th className="text-left px-4 py-3 font-bold text-subtitle text-xs uppercase tracking-wider">Usuario</th>
+                <th className="text-left px-4 py-3 font-bold text-subtitle text-xs uppercase tracking-wider">Rol</th>
                 {REPORT_OPTIONS.map((opt) => (
-                  <th key={opt.key} className="text-center px-3 py-3 font-semibold text-slate-700 whitespace-nowrap">
+                  <th key={opt.key} className="text-center px-3 py-3 font-bold text-subtitle text-xs uppercase tracking-wider whitespace-nowrap">
                     {opt.label}
                   </th>
                 ))}
-                <th className="text-center px-4 py-3 font-semibold text-slate-700">Acción</th>
+                <th className="text-center px-4 py-3 font-bold text-subtitle text-xs uppercase tracking-wider">Acción</th>
               </tr>
             </thead>
             <tbody>
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={REPORT_OPTIONS.length + 3} className="text-center py-8 text-slate-400">
+                  <td colSpan={REPORT_OPTIONS.length + 3} className="text-center py-8 text-subtitle">
                     No se encontraron usuarios
                   </td>
                 </tr>
@@ -131,16 +131,16 @@ export default function GestionPermisos() {
                 const isSaving = saving === u.id;
 
                 return (
-                  <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <tr key={u.id} className="border-b border-border-card hover:bg-background-primary transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-slate-800">{u.full_name || u.username}</div>
-                      <div className="text-xs text-slate-400">{u.username}</div>
+                      <div className="font-bold text-title">{u.full_name || u.username}</div>
+                      <div className="text-xs text-subtitle">{u.username}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                      <span className={`inline-block px-2 py-0.5 rounded-lg text-xs font-bold ${
                         isAdmin
                           ? "bg-purple-100 text-purple-700"
-                          : "bg-slate-100 text-slate-600"
+                          : "bg-background-primary text-subtitle"
                       }`}>
                         {u.role}
                       </span>
@@ -152,7 +152,7 @@ export default function GestionPermisos() {
                           checked={isAdmin || reports.has(opt.key)}
                           disabled={isAdmin}
                           onChange={(e) => toggleReport(u.id, opt.key, e.target.checked)}
-                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                          className="w-4 h-4 rounded border-border-card text-button-primary focus:ring-button-primary/20 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                         />
                       </td>
                     ))}
@@ -160,7 +160,7 @@ export default function GestionPermisos() {
                       <button
                         onClick={() => saveUser(u.id)}
                         disabled={isSaving}
-                        className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                        className="inline-flex items-center gap-1.5 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
                       >
                         <Save className="w-3.5 h-3.5" />
                         {isSaving ? "Guardando..." : "Guardar"}

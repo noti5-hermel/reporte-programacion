@@ -139,9 +139,11 @@ const FormatoPage: FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Procesar Archivos para Reportes</h1>
-      <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+    <div className="flex flex-col gap-6">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm">
+        <h1 className="text-2xl font-black tracking-tight text-title">Procesar Archivos para Reportes</h1>
+      </div>
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm space-y-6">
         <Select
           id="format-select"
           label="Selecciona el formato a generar"
@@ -155,7 +157,7 @@ const FormatoPage: FC = () => {
           options={formatOptions}
         />
         <div>
-          <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="file-upload" className="block text-sm font-bold text-title mb-2">
             Selecciona el archivo ({acceptedFileTypes.toUpperCase()})
           </label>
           <input
@@ -164,13 +166,13 @@ const FormatoPage: FC = () => {
             type="file"
             accept={acceptedFileTypes}
             onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="block w-full text-sm text-subtitle file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-button-primary file:text-white hover:file:bg-button-primary-hover file:transition-all file:cursor-pointer file:shadow-btn-glow"
           />
         </div>
         <button
           onClick={handleProcessFile}
           disabled={!selectedFile || processing}
-          className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
+          className="w-full bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white font-bold py-2.5 px-6 rounded-xl shadow-btn-glow hover:shadow-btn-glow-hover transition-all duration-200"
         >
           {processing ? 'Procesando...' : 'Procesar Archivo'}
         </button>

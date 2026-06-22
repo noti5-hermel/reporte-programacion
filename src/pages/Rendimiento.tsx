@@ -141,41 +141,41 @@ export default function Rendimiento() {
   }, [stats, operatorData, viewMode]);
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200 gap-4">
+    <div className="flex flex-col gap-6 p-6 bg-background-primary min-h-screen">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Panel de Rendimiento</h1>
-          <p className="text-slate-500 text-sm">Monitoreo en tiempo real de productividad</p>
+          <h1 className="text-2xl font-black tracking-tight text-title">Panel de Rendimiento</h1>
+          <p className="text-subtitle text-sm">Monitoreo en tiempo real de productividad</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-background-primary rounded-xl p-1 border border-border-card">
             <button
               onClick={() => setViewMode("tasks")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "tasks"
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-button-primary text-white shadow-btn-glow"
+                  : "text-subtitle hover:text-title"
               }`}
             >
               Por Tarea
             </button>
             <button
               onClick={() => setViewMode("operators")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "operators"
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-button-primary text-white shadow-btn-glow"
+                  : "text-subtitle hover:text-title"
               }`}
             >
               Por Operario
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <Users className="text-blue-600 w-5 h-5" />
+            <Users className="text-button-primary w-5 h-5" />
             <select
               value={selectedTeam}
               onChange={(e) => setSelectedTeam(e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-w-[150px]"
+              className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all min-w-[150px]"
             >
               {uniqueTeams.map(team => (
                 <option key={team} value={team}>{team}</option>
@@ -183,19 +183,19 @@ export default function Rendimiento() {
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <Calendar className="text-blue-600 w-5 h-5" />
+            <Calendar className="text-button-primary w-5 h-5" />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               max={today}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
             />
           </div>
           <button
             onClick={() => rendimientoService.downloadExcel(detailData, stats, selectedDate, selectedTeam)}
             disabled={loading || detailData.length === 0}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm"
+            className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
           >
             <FileDown className="w-4 h-4" />
             Descargar Excel
@@ -203,61 +203,61 @@ export default function Rendimiento() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="bg-blue-100 p-3 rounded-lg text-blue-600">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-background-secondary p-5 rounded-2xl border border-border-card shadow-sm flex items-center gap-4">
+          <div className="bg-icon-bg p-3 rounded-xl text-button-primary">
             {viewMode === "operators" ? <User className="w-6 h-6" /> : <Users className="w-6 h-6" />}
           </div>
           <div>
-            <p className="text-slate-500 text-xs font-semibold uppercase">
+            <p className="text-subtitle text-xs font-bold uppercase tracking-wider">
               {viewMode === "operators" ? "Operarios" : "Equipos"}
             </p>
-            <p className="text-xl font-bold text-slate-800">{displayStats.card1}</p>
+            <p className="text-2xl font-black text-title">{displayStats.card1}</p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="bg-green-100 p-3 rounded-lg text-green-600">
+        <div className="bg-background-secondary p-5 rounded-2xl border border-border-card shadow-sm flex items-center gap-4">
+          <div className="bg-green-100 p-3 rounded-xl text-green-600">
             <Activity className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-slate-500 text-xs font-semibold uppercase">
+            <p className="text-subtitle text-xs font-bold uppercase tracking-wider">
               {viewMode === "operators" ? "Prod. Real (und/h)" : "Eficiencia Prom."}
             </p>
-            <p className="text-xl font-bold text-slate-800">
+            <p className="text-2xl font-black text-title">
               {viewMode === "operators" ? displayStats.card2.toFixed(1) : `${displayStats.card2}%`}
             </p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="bg-purple-100 p-3 rounded-lg text-purple-600">
+        <div className="bg-background-secondary p-5 rounded-2xl border border-border-card shadow-sm flex items-center gap-4">
+          <div className="bg-purple-100 p-3 rounded-xl text-purple-600">
             <CheckCircle className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-slate-500 text-xs font-semibold uppercase">Tareas</p>
-            <p className="text-xl font-bold text-slate-800">{displayStats.card3}</p>
+            <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Tareas</p>
+            <p className="text-2xl font-black text-title">{displayStats.card3}</p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="bg-orange-100 p-3 rounded-lg text-orange-600">
+        <div className="bg-background-secondary p-5 rounded-2xl border border-border-card shadow-sm flex items-center gap-4">
+          <div className="bg-orange-100 p-3 rounded-xl text-orange-600">
             <CheckCircle className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-slate-500 text-xs font-semibold uppercase">Progreso</p>
-            <p className="text-xl font-bold text-slate-800">{displayStats.card4}%</p>
+            <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Progreso</p>
+            <p className="text-2xl font-black text-title">{displayStats.card4}%</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
         <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="text-lg font-semibold text-slate-700">
+          <h2 className="text-lg font-bold text-title">
             {viewMode === "operators" ? "Rendimiento por Operario" : "Detalle de Ejecución"}
           </h2>
           <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-100">
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">
             {error}
           </div>
         )}
@@ -265,57 +265,59 @@ export default function Rendimiento() {
         {viewMode === "operators" ? (
           <DataTable type="operators" data={filteredData} loading={loading} />
         ) : loading ? (
-          <p className="text-center text-gray-500">Cargando datos...</p>
+          <p className="text-center text-subtitle py-10">Cargando datos...</p>
         ) : filteredData.length === 0 ? (
-          <p className="text-center text-gray-400">No hay datos disponibles</p>
+          <div className="flex flex-col items-center justify-center py-20 bg-background-primary border border-dashed border-border-card rounded-3xl">
+            <p className="text-subtitle font-bold">No hay datos disponibles</p>
+          </div>
         ) : (
           <div className="space-y-6">
             {teamsGrouped.map((group) => {
               const rendColor = group.promedio !== null
                 ? (group.promedio >= 85 ? 'text-green-600' : group.promedio >= 60 ? 'text-yellow-600' : 'text-red-600')
-                : 'text-gray-400';
+                : 'text-subtitle';
               const progress = group.total > 0 ? (group.completadas / group.total * 100).toFixed(0) : "0";
 
               return (
-                <div key={group.equipo} className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200">
+                <div key={group.equipo} className="border border-border-card rounded-2xl overflow-hidden shadow-sm">
+                  <div className="bg-gradient-to-r from-button-primary/5 to-button-primary/10 px-5 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-border-card">
                     <div className="flex items-center gap-3">
-                      <h3 className="font-bold text-lg text-slate-800">{group.equipo}</h3>
-                      <span className="text-sm text-slate-500">
+                      <h3 className="font-black text-lg text-title">{group.equipo}</h3>
+                      <span className="text-sm font-bold text-subtitle">
                         {group.completadas}/{group.total} tareas
                       </span>
                     </div>
                     <div className="flex items-center gap-6 text-sm">
                       <div className="text-center">
-                        <p className="text-slate-500 text-xs">Rendimiento Prom.</p>
-                        <p className={`font-bold text-base ${rendColor}`}>
+                        <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Rendimiento Prom.</p>
+                        <p className={`font-black text-base ${rendColor}`}>
                           {group.promedio !== null ? `${group.promedio.toFixed(1)}%` : "N/A"}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-slate-500 text-xs">Progreso</p>
-                        <p className="font-bold text-base text-blue-700">{progress}%</p>
+                        <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Progreso</p>
+                        <p className="font-black text-base text-button-primary">{progress}%</p>
                       </div>
                     </div>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full border-collapse">
-                      <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                      <thead className="bg-background-primary text-subtitle text-xs uppercase tracking-wider">
                         <tr>
-                          <th className="px-3 py-2 text-left">Código</th>
-                          <th className="px-3 py-2 text-left">Descripción</th>
-                          <th className="px-3 py-2 text-left">Material</th>
-                          <th className="px-3 py-2 text-left">Lote</th>
-                          <th className="px-3 py-2 text-right">Cant. Plan.</th>
-                          <th className="px-3 py-2 text-right">Cant. Real</th>
-                          <th className="px-3 py-2 text-center">Inicio Plan</th>
-                          <th className="px-3 py-2 text-center">Fin Plan</th>
-                          <th className="px-3 py-2 text-right">T. Plan</th>
-                          <th className="px-3 py-2 text-center">Inicio Real</th>
-                          <th className="px-3 py-2 text-center">Fin Real</th>
-                          <th className="px-3 py-2 text-right">T. Real</th>
-                          <th className="px-3 py-2 text-right">Rendimiento</th>
-                          <th className="px-3 py-2 text-left">Comentarios</th>
+                          <th className="px-3 py-3 text-left font-bold">Código</th>
+                          <th className="px-3 py-3 text-left font-bold">Descripción</th>
+                          <th className="px-3 py-3 text-left font-bold">Material</th>
+                          <th className="px-3 py-3 text-left font-bold">Lote</th>
+                          <th className="px-3 py-3 text-right font-bold">Cant. Plan.</th>
+                          <th className="px-3 py-3 text-right font-bold">Cant. Real</th>
+                          <th className="px-3 py-3 text-center font-bold">Inicio Plan</th>
+                          <th className="px-3 py-3 text-center font-bold">Fin Plan</th>
+                          <th className="px-3 py-3 text-right font-bold">T. Plan</th>
+                          <th className="px-3 py-3 text-center font-bold">Inicio Real</th>
+                          <th className="px-3 py-3 text-center font-bold">Fin Real</th>
+                          <th className="px-3 py-3 text-right font-bold">T. Real</th>
+                          <th className="px-3 py-3 text-right font-bold">Rendimiento</th>
+                          <th className="px-3 py-3 text-left font-bold">Comentarios</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -329,25 +331,25 @@ export default function Rendimiento() {
                           const rend = row.rendimiento;
                           const rendColor = rend !== null && rend !== undefined
                             ? (rend >= 85 ? 'text-green-600 font-bold' : rend >= 60 ? 'text-yellow-600 font-bold' : 'text-red-600 font-bold')
-                            : 'text-gray-400';
+                            : 'text-subtitle';
                           return (
-                            <tr key={i} className="hover:bg-gray-50 text-sm even:bg-gray-50/50">
-                              <td className="px-3 py-2 border-b">{row.codigo || "-"}</td>
-                              <td className="px-3 py-2 border-b">{row.description || "-"}</td>
-                              <td className="px-3 py-2 border-b">{row.material || "-"}</td>
-                              <td className="px-3 py-2 border-b font-mono">{row.lote || "-"}</td>
-                              <td className="px-3 py-2 border-b text-right">{row.cantidad_planificada ?? "-"}</td>
-                              <td className="px-3 py-2 border-b text-right">{row.cantidad_real ?? "-"}</td>
-                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.inicio_planificado)}</td>
-                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.final_planificado)}</td>
-                              <td className="px-3 py-2 border-b text-right font-mono">{row.tiempo_planificado ?? "-"}</td>
-                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.inicio_real)}</td>
-                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.final_real)}</td>
-                              <td className="px-3 py-2 border-b text-right font-mono">{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : "-"}</td>
-                              <td className={`px-3 py-2 border-b text-right ${rendColor}`}>
+                            <tr key={i} className="hover:bg-background-primary text-sm transition-colors even:bg-background-primary/50">
+                              <td className="px-3 py-2.5 border-b border-border-card">{row.codigo || "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card">{row.description || "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card">{row.material || "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card font-mono">{row.lote || "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right">{row.cantidad_planificada ?? "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right">{row.cantidad_real ?? "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.inicio_planificado)}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.final_planificado)}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right font-mono">{row.tiempo_planificado ?? "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.inicio_real)}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.final_real)}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right font-mono">{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : "-"}</td>
+                              <td className={`px-3 py-2.5 border-b border-border-card text-right ${rendColor}`}>
                                 {rend != null ? `${rend.toFixed(2)}%` : "N/A"}
                               </td>
-                              <td className="px-3 py-2 border-b text-xs max-w-[150px] truncate" title={row.comentarios || ""}>
+                              <td className="px-3 py-2.5 border-b border-border-card text-xs max-w-[150px] truncate" title={row.comentarios || ""}>
                                 {row.comentarios || "-"}
                               </td>
                             </tr>
