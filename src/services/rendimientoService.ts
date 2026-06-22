@@ -147,7 +147,7 @@ function applyRowStyle(row: any, colNumber: number) {
 
 async function downloadRendimientoExcel(
   detail: RendimientoDetailItem[],
-  stats: RendimientoStats,
+  _stats: RendimientoStats,
   date: string,
   teamFilter: string
 ) {

@@ -129,7 +129,6 @@ export default function Rendimiento() {
       const total = operatorData.length;
       const completed = operatorData.filter((d: any) => d.completion_rate > 0).length;
       const avgProd = operatorData.reduce((acc: number, curr: any) => acc + (parseFloat(curr.real_productivity) || 0), 0) / (total || 1);
-      const teamsCount = new Set(operatorData.flatMap((d: any) => (d.teams || "").split(", ").filter(Boolean))).size;
       return { card1: total, card2: avgProd, card3: `${completed} / ${total}`, card4: total > 0 ? ((completed / total) * 100).toFixed(0) : "0" };
     }
 
