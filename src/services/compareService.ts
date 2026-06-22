@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, fetchWithAuth } from "../config/api";
 
 export interface CompareRecord {
   code: string;
@@ -19,18 +19,12 @@ export interface HistoricoFecha {
 
 export const compareService = {
   async getCompareRecords(compareDate?: string): Promise<CompareRecord[]> {
-    const token = localStorage.getItem("token");
     let url = `${API_BASE_URL}/api/v1/reports/compare/`;
     if (compareDate) {
       url += `?compareDate=${encodeURIComponent(compareDate)}`;
     }
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: { 
-        "Authorization": `Bearer ${token}` 
-      },
-    });
+    const response = await fetchWithAuth(url);
 
     if (!response.ok) {
       throw new Error("Failed to fetch comparison records");
@@ -40,13 +34,7 @@ export const compareService = {
   },
 
   async getHistoricoFechas(): Promise<HistoricoFecha[]> {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
-      method: "GET",
-      headers: { 
-        "Authorization": `Bearer ${token}` 
-      },
-    });
+    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch historical dates");
@@ -56,13 +44,9 @@ export const compareService = {
   },
 
   async createCompareRecords(items: any[]): Promise<any> {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/reports/compare/`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/reports/compare/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(items),
     });
 
@@ -75,13 +59,9 @@ export const compareService = {
   },
 
   async createHistoricoFecha(fecha: string): Promise<any> {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/reports/historico-comparacion-fechas/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fecha }),
     });
 

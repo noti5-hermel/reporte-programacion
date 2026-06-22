@@ -1,4 +1,4 @@
-import { REPORTS_API_URL } from "../config/api";
+import { REPORTS_API_URL, fetchWithAuth } from "../config/api";
 
 export interface TaskPerformanceGroupItem {
   code: string;
@@ -14,7 +14,6 @@ export interface TaskPerformanceGroupItem {
 
 export const productivityService = {
   async getTaskPerformanceGroup(year?: number | null, month?: number | null): Promise<TaskPerformanceGroupItem[]> {
-    const token = localStorage.getItem("token");
     let url = `${REPORTS_API_URL}/api/v1/reports/task-performance-group`;
     
     const params = new URLSearchParams();
@@ -29,11 +28,7 @@ export const productivityService = {
       url += `?${params.toString()}`;
     }
 
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
+    const response = await fetchWithAuth(url);
 
     if (!response.ok) {
       throw new Error("Failed to fetch task performance group data");

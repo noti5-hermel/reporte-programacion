@@ -96,6 +96,34 @@ export default function Rendimiento() {
     return filtered;
   }, [detailData, operatorData, searchQuery, selectedTeam, viewMode]);
 
+  const teamsGrouped = useMemo(() => {
+    if (viewMode === "operators") return [];
+    const groups: Record<string, { tasks: typeof filteredData; rendimientos: number[]; completadas: number; total: number }> = {};
+    for (const item of filteredData) {
+      const team = item.equipo || "Sin equipo";
+      if (!groups[team]) {
+        groups[team] = { tasks: [], rendimientos: [], completadas: 0, total: 0 };
+      }
+      groups[team].tasks.push(item);
+      groups[team].total++;
+      if (item.rendimiento != null) {
+        groups[team].rendimientos.push(item.rendimiento);
+      }
+      if (item.tiempo_real != null) {
+        groups[team].completadas++;
+      }
+    }
+    return Object.entries(groups).map(([equipo, data]) => ({
+      equipo,
+      tasks: data.tasks,
+      promedio: data.rendimientos.length > 0
+        ? data.rendimientos.reduce((a, b) => a + b, 0) / data.rendimientos.length
+        : null,
+      completadas: data.completadas,
+      total: data.total,
+    }));
+  }, [filteredData, viewMode]);
+
   const displayStats = useMemo(() => {
     if (viewMode === "operators") {
       const total = operatorData.length;
@@ -235,7 +263,105 @@ export default function Rendimiento() {
           </div>
         )}
 
-        <DataTable type={viewMode === "operators" ? "operators" : "rendimiento"} data={filteredData} loading={loading} />
+        {viewMode === "operators" ? (
+          <DataTable type="operators" data={filteredData} loading={loading} />
+        ) : loading ? (
+          <p className="text-center text-gray-500">Cargando datos...</p>
+        ) : filteredData.length === 0 ? (
+          <p className="text-center text-gray-400">No hay datos disponibles</p>
+        ) : (
+          <div className="space-y-6">
+            {teamsGrouped.map((group) => {
+              const rendColor = group.promedio !== null
+                ? (group.promedio >= 85 ? 'text-green-600' : group.promedio >= 60 ? 'text-yellow-600' : 'text-red-600')
+                : 'text-gray-400';
+              const progress = group.total > 0 ? (group.completadas / group.total * 100).toFixed(0) : "0";
+
+              return (
+                <div key={group.equipo} className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-bold text-lg text-slate-800">{group.equipo}</h3>
+                      <span className="text-sm text-slate-500">
+                        {group.completadas}/{group.total} tareas
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="text-center">
+                        <p className="text-slate-500 text-xs">Rendimiento Prom.</p>
+                        <p className={`font-bold text-base ${rendColor}`}>
+                          {group.promedio !== null ? `${group.promedio.toFixed(1)}%` : "N/A"}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-slate-500 text-xs">Progreso</p>
+                        <p className="font-bold text-base text-blue-700">{progress}%</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse">
+                      <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                        <tr>
+                          <th className="px-3 py-2 text-left">Código</th>
+                          <th className="px-3 py-2 text-left">Descripción</th>
+                          <th className="px-3 py-2 text-left">Material</th>
+                          <th className="px-3 py-2 text-left">Lote</th>
+                          <th className="px-3 py-2 text-right">Cant. Plan.</th>
+                          <th className="px-3 py-2 text-right">Cant. Real</th>
+                          <th className="px-3 py-2 text-center">Inicio Plan</th>
+                          <th className="px-3 py-2 text-center">Fin Plan</th>
+                          <th className="px-3 py-2 text-right">T. Plan</th>
+                          <th className="px-3 py-2 text-center">Inicio Real</th>
+                          <th className="px-3 py-2 text-center">Fin Real</th>
+                          <th className="px-3 py-2 text-right">T. Real</th>
+                          <th className="px-3 py-2 text-right">Rendimiento</th>
+                          <th className="px-3 py-2 text-left">Comentarios</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.tasks.map((row: any, i: number) => {
+                          const formatTime = (val: string | null) => {
+                            if (!val) return "-";
+                            if (val.includes("T")) return val.slice(11, 19);
+                            if (val.length >= 8) return val.slice(0, 8);
+                            return val;
+                          };
+                          const rend = row.rendimiento;
+                          const rendColor = rend !== null && rend !== undefined
+                            ? (rend >= 85 ? 'text-green-600 font-bold' : rend >= 60 ? 'text-yellow-600 font-bold' : 'text-red-600 font-bold')
+                            : 'text-gray-400';
+                          return (
+                            <tr key={i} className="hover:bg-gray-50 text-sm even:bg-gray-50/50">
+                              <td className="px-3 py-2 border-b">{row.codigo || "-"}</td>
+                              <td className="px-3 py-2 border-b">{row.description || "-"}</td>
+                              <td className="px-3 py-2 border-b">{row.material || "-"}</td>
+                              <td className="px-3 py-2 border-b font-mono">{row.lote || "-"}</td>
+                              <td className="px-3 py-2 border-b text-right">{row.cantidad_planificada ?? "-"}</td>
+                              <td className="px-3 py-2 border-b text-right">{row.cantidad_real ?? "-"}</td>
+                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.inicio_planificado)}</td>
+                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.final_planificado)}</td>
+                              <td className="px-3 py-2 border-b text-right font-mono">{row.tiempo_planificado ?? "-"}</td>
+                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.inicio_real)}</td>
+                              <td className="px-3 py-2 border-b text-center text-xs">{formatTime(row.final_real)}</td>
+                              <td className="px-3 py-2 border-b text-right font-mono">{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : "-"}</td>
+                              <td className={`px-3 py-2 border-b text-right ${rendColor}`}>
+                                {rend != null ? `${rend.toFixed(2)}%` : "N/A"}
+                              </td>
+                              <td className="px-3 py-2 border-b text-xs max-w-[150px] truncate" title={row.comentarios || ""}>
+                                {row.comentarios || "-"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { REPORTS_API_URL } from "../config/api";
+import { REPORTS_API_URL, fetchWithAuth } from "../config/api";
 
 export interface TaskPerformanceItem {
   fecha: string;
@@ -20,12 +20,7 @@ export interface TaskPerformanceItem {
 
 export const taskPerformanceService = {
   async getTaskPerformance(): Promise<TaskPerformanceItem[]> {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${REPORTS_API_URL}/api/v1/reports/task-performance`, {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
+    const response = await fetchWithAuth(`${REPORTS_API_URL}/api/v1/reports/task-performance`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch task performance data");

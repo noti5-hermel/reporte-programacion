@@ -99,7 +99,12 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
   const rendColor = rend !== null && rend !== undefined
     ? (rend >= 85 ? 'text-green-600' : rend >= 60 ? 'text-yellow-600' : 'text-red-600')
     : 'text-gray-400';
-  const formatTime = (val: string | null) => val ? val.slice(11, 19) : "-";
+  const formatTime = (val: string | null) => {
+    if (!val) return "-";
+    if (val.includes("T")) return val.slice(11, 19);
+    if (val.length >= 8) return val.slice(0, 8);
+    return val;
+  };
 
   return (
     <tr className="hover:bg-gray-50 text-sm">

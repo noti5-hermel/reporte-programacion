@@ -6,7 +6,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { API_BASE_URL } from "../../../config/api";
+import { API_BASE_URL, REPORTS_API_URL } from "../../../config/api";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -129,19 +129,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedToken && storedUser) return;
 
     const checkAuthHealth = async () => {
-      const authUrl = import.meta.env.VITE_AUTH_FRONTEND_URL || "http://192.168.1.155:5173";
+      const healthUrl = import.meta.env.VITE_AUTH_HEALTH_URL || "http://192.168.1.155:8081/api/auth/health";
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-        await fetch(authUrl, {
-          method: 'HEAD',
-          mode: 'no-cors',
+        const response = await fetch(healthUrl, {
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
-        setAuthServiceAvailable(true);
+
+        if (response.ok) {
+          const data = await response.json();
+          setAuthServiceAvailable(data?.status === "UP");
+        } else {
+          setAuthServiceAvailable(false);
+        }
       } catch {
         setAuthServiceAvailable(false);
       }
@@ -189,8 +193,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [authServiceAvailable, user, token]);
 
   const login = async (username: string, password: string) => {
-    const authApiUrl = import.meta.env.VITE_AUTH_API_URL || API_BASE_URL;
-    const response = await fetch(`${authApiUrl}/api/v1/auth/login`, {
+    const loginUrl = authServiceAvailable === false
+      ? `${REPORTS_API_URL}/api/v1/auth/login`
+      : `${import.meta.env.VITE_AUTH_API_URL || API_BASE_URL}/api/v1/auth/login`;
+
+    const response = await fetch(loginUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

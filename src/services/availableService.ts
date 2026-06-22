@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, fetchWithAuth } from "../config/api";
 
 export interface AvailableItem {
   id?: string;
@@ -14,12 +14,7 @@ export interface AvailableItem {
 
 export const availableService = {
   async getAvailableItems(skip = 0, limit = 100): Promise<AvailableItem[]> {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/available/?skip=${skip}&limit=${limit}`, {
-      headers: { 
-        "Authorization": `Bearer ${token}` 
-      }
-    });
+    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/available/?skip=${skip}&limit=${limit}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch available items");
@@ -29,13 +24,9 @@ export const availableService = {
   },
 
   async createAvailableItems(items: AvailableItem[]): Promise<AvailableItem[]> {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/available/`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/available/`, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        "Authorization": `Bearer ${token}` 
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(items),
     });
 
@@ -48,12 +39,8 @@ export const availableService = {
   },
 
   async deleteAllAvailableItems(): Promise<any> {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/available/`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/available/`, {
       method: 'DELETE',
-      headers: { 
-        "Authorization": `Bearer ${token}` 
-      },
     });
 
     if (!response.ok) {
