@@ -20,7 +20,7 @@ export default function Comparacion() {
   const [documentoFile, setDocumentoFile] = useState<File | null>(null);
   const [selectedTipo, setSelectedTipo] = useState<string>("");
   const [saving, setSaving] = useState<boolean>(false);
-  const [fechasDisponibles, setFechasDisponibles] = useState<Array<{ fecha: string; id?: number }>>([]);
+  const [fechasDisponibles, setFechasDisponibles] = useState<Array<{ fecha: string; id?: string }>>([]);
   const [loadingFechas, setLoadingFechas] = useState<boolean>(false);
 
   const loadComparacionByDate = async (fecha: string) => {

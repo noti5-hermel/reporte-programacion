@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarItem } from "./SidebarItem";
 import { useAuth } from "../../hooks/useAuth";
 import { permissionService, REPORT_OPTIONS } from "../../services/permissionService";
@@ -16,7 +16,7 @@ import {
 interface NavItem {
   to: string;
   label: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
   reportKey: string;
 }
 

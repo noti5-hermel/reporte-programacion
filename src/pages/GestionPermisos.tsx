@@ -5,7 +5,7 @@ import type { UserItem } from "../services/permissionService";
 import { useAuth } from "../hooks/useAuth";
 
 export default function GestionPermisos() {
-  const { user } = useAuth();
+  useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [userReports, setUserReports] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
