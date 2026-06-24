@@ -5,18 +5,6 @@ interface RowProps {
   type: "general" | "resumen" | "rendimiento" | "operators";
   row: any;
 }
-
-// Función para formatear la fecha
-const formatDate = (dateString: string) => {
-  if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("es-ES", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-};
-
 const TableRow: React.FC<RowProps> = ({ type, row }) => {
 
   const baseRowClass = "hover:bg-background-primary text-sm transition-colors";

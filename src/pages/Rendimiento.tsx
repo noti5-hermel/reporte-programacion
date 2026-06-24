@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { rendimientoService } from "../services/rendimientoService";
-import type { RendimientoStats, RendimientoDetailItem, RendimientoMensualResponse, TeamMonthly } from "../services/rendimientoService";
+import type { RendimientoStats, RendimientoDetailItem, RendimientoMensualResponse } from "../services/rendimientoService";
 import { Calendar, Users, Activity, CheckCircle, FileDown, ChevronDown, ChevronRight } from "lucide-react";
 
 type ViewMode = "tasks" | "monthly";
