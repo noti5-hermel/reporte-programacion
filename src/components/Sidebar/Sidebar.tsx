@@ -6,11 +6,7 @@ import {
   ChevronLeft,
   TableProperties,
   ClipboardList,
-  GitCompareArrows,
-  FileText,
-  PackageCheck,
   Activity,
-  Shield,
 } from "lucide-react";
 
 interface NavItem {
@@ -24,9 +20,6 @@ const ALL_ITEMS: NavItem[] = [
   { to: "/general", label: "Tabla General", icon: <TableProperties />, reportKey: "general" },
   { to: "/rendimiento", label: "Rendimiento", icon: <Activity />, reportKey: "rendimiento" },
   { to: "/resumen", label: "Tabla Resumida", icon: <ClipboardList />, reportKey: "resumen" },
-  { to: "/comparacion", label: "Comparación", icon: <GitCompareArrows />, reportKey: "comparacion" },
-  { to: "/formato", label: "Formato", icon: <FileText />, reportKey: "formato" },
-  { to: "/disponibilidad", label: "Disponibilidad", icon: <PackageCheck />, reportKey: "disponibilidad" },
 ];
 
 function useUserReports() {
@@ -114,16 +107,6 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      {isAdmin && (
-        <div className="pt-4 border-t border-border-card">
-          <SidebarItem
-            to="/permisos"
-            label="Permisos"
-            isCollapsed={isCollapsed}
-            icon={<Shield />}
-          />
-        </div>
-      )}
     </aside>
   );
 };

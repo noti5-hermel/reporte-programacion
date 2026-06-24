@@ -2,7 +2,7 @@
 import React from "react";
 
 interface RowProps {
-  type: "general" | "resumen" | "disponibilidad" | "rendimiento" | "operators";
+  type: "general" | "resumen" | "rendimiento" | "operators";
   row: any;
 }
 
@@ -21,21 +21,6 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
 
   const baseRowClass = "hover:bg-background-primary text-sm transition-colors";
   const cellClass = "px-3 py-2.5 border-b border-border-card";
-
-  // --- Caso para la tabla de Disponibilidad ---
-  if (type === "disponibilidad") {
-    return (
-      <tr className={baseRowClass}>
-        <td className={`${cellClass} font-mono`}>{row.codigo}</td>
-        <td className={cellClass}>{row.description}</td>
-        <td className={`${cellClass} text-right`}>{row.disponible}</td>
-        <td className={`${cellClass} text-right`}>{row.minimo}</td>
-        <td className={`${cellClass} text-right`}>{row.reorder}</td>
-        <td className={`${cellClass} text-right font-bold`}>{row.dias_disponibles}</td>
-        <td className={`${cellClass} text-center`}>{formatDate(row.date_upload)}</td>
-      </tr>
-    );
-  }
 
   // --- Caso para la tabla General ---
   if (type === "general") {

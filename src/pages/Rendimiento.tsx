@@ -1,24 +1,30 @@
 import { useState, useMemo, useEffect } from "react";
-import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { rendimientoService } from "../services/rendimientoService";
-import type { RendimientoStats, RendimientoDetailItem } from "../services/rendimientoService";
-import { operatorPerformanceService } from "../services/operatorPerformanceService";
-import { Calendar, Users, Activity, CheckCircle, User, FileDown } from "lucide-react";
+import type { RendimientoStats, RendimientoDetailItem, RendimientoMensualResponse, TeamMonthly } from "../services/rendimientoService";
+import { Calendar, Users, Activity, CheckCircle, FileDown, ChevronDown, ChevronRight } from "lucide-react";
 
-type ViewMode = "tasks" | "operators";
+type ViewMode = "tasks" | "monthly";
+
+const MONTHS = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
 
 export default function Rendimiento() {
   const [detailData, setDetailData] = useState<RendimientoDetailItem[]>([]);
   const [stats, setStats] = useState<RendimientoStats>({
     equipos: 0, eficiencia_promedio: 0, tareas_completadas: 0, tareas_totales: 0, progreso: 0,
   });
-  const [operatorData, setOperatorData] = useState<any[]>([]);
+  const [monthlyData, setMonthlyData] = useState<RendimientoMensualResponse | null>(null);
+  const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedTeam, setSelectedTeam] = useState("Todos");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [viewMode, setViewMode] = useState<ViewMode>("tasks");
 
   const today = new Date().toISOString().split("T")[0];
@@ -27,25 +33,21 @@ export default function Rendimiento() {
     setLoading(true);
     setError("");
     try {
-      if (viewMode === "operators") {
-        const endDate = date || today;
-        const startDate = date
-          ? date
-          : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-        const result = await operatorPerformanceService.getOperatorPerformance(startDate, endDate);
-        setOperatorData(Array.isArray(result) ? result : []);
+      if (viewMode === "monthly") {
+        const result = await rendimientoService.getRendimientoMensual(selectedYear, selectedMonth);
+        setMonthlyData(result);
         setDetailData([]);
       } else {
         const teamParam = selectedTeam !== "Todos" ? selectedTeam : null;
         const result = await rendimientoService.getRendimiento(date || today, teamParam);
         setStats(result.stats);
         setDetailData(result.detail);
-        setOperatorData([]);
+        setMonthlyData(null);
       }
     } catch (err) {
       setError("Error de conexión con el servidor");
       setDetailData([]);
-      setOperatorData([]);
+      setMonthlyData(null);
     } finally {
       setLoading(false);
     }
@@ -53,35 +55,14 @@ export default function Rendimiento() {
 
   useEffect(() => {
     fetchData(selectedDate);
-  }, [selectedDate, viewMode]);
+  }, [selectedDate, selectedMonth, selectedYear, viewMode]);
 
   const uniqueTeams = useMemo(() => {
-    if (viewMode === "operators") {
-      const teams = new Set(operatorData.flatMap((item: any) => (item.teams || "").split(", ").filter(Boolean)));
-      return ["Todos", ...Array.from(teams)].sort();
-    }
     const teams = new Set(detailData.map((item) => item.equipo));
     return ["Todos", ...Array.from(teams)].sort();
-  }, [detailData, operatorData, viewMode]);
+  }, [detailData]);
 
   const filteredData = useMemo(() => {
-    if (viewMode === "operators") {
-      let filtered = operatorData;
-      if (selectedTeam !== "Todos") {
-        filtered = filtered.filter((item: any) =>
-          (item.teams || "").includes(selectedTeam)
-        );
-      }
-      if (searchQuery) {
-        filtered = filtered.filter((item: any) =>
-          Object.values(item).some((value) =>
-            String(value).toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        );
-      }
-      return filtered;
-    }
-
     let filtered = detailData;
     if (selectedTeam !== "Todos") {
       filtered = filtered.filter((item) => item.equipo === selectedTeam);
@@ -94,10 +75,9 @@ export default function Rendimiento() {
       );
     }
     return filtered;
-  }, [detailData, operatorData, searchQuery, selectedTeam, viewMode]);
+  }, [detailData, searchQuery, selectedTeam]);
 
   const teamsGrouped = useMemo(() => {
-    if (viewMode === "operators") return [];
     const groups: Record<string, { tasks: typeof filteredData; rendimientos: number[]; completadas: number; total: number }> = {};
     for (const item of filteredData) {
       const team = item.equipo || "Sin equipo";
@@ -122,23 +102,26 @@ export default function Rendimiento() {
       completadas: data.completadas,
       total: data.total,
     }));
-  }, [filteredData, viewMode]);
+  }, [filteredData]);
 
   const displayStats = useMemo(() => {
-    if (viewMode === "operators") {
-      const total = operatorData.length;
-      const completed = operatorData.filter((d: any) => d.completion_rate > 0).length;
-      const avgProd = operatorData.reduce((acc: number, curr: any) => acc + (parseFloat(curr.real_productivity) || 0), 0) / (total || 1);
-      return { card1: total, card2: avgProd, card3: `${completed} / ${total}`, card4: total > 0 ? ((completed / total) * 100).toFixed(0) : "0" };
+    if (viewMode === "monthly" && monthlyData) {
+      return {
+        card1: monthlyData.stats.equipos,
+        card2: monthlyData.stats.eficiencia_promedio,
+        card3: `${monthlyData.stats.tareas_completadas} / ${monthlyData.stats.tareas_totales}`,
+        card4: monthlyData.stats.tareas_totales > 0
+          ? Math.round((monthlyData.stats.tareas_completadas / monthlyData.stats.tareas_totales) * 100)
+          : 0,
+      };
     }
-
     return {
       card1: stats.equipos,
       card2: stats.eficiencia_promedio,
       card3: `${stats.tareas_completadas} / ${stats.tareas_totales}`,
       card4: stats.progreso,
     };
-  }, [stats, operatorData, viewMode]);
+  }, [stats, monthlyData, viewMode]);
 
   return (
     <div className="flex flex-col gap-6 p-6 bg-background-primary min-h-screen">
@@ -157,60 +140,84 @@ export default function Rendimiento() {
                   : "text-subtitle hover:text-title"
               }`}
             >
-              Por Tarea
+              Diario
             </button>
             <button
-              onClick={() => setViewMode("operators")}
+              onClick={() => setViewMode("monthly")}
               className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                viewMode === "operators"
+                viewMode === "monthly"
                   ? "bg-button-primary text-white shadow-btn-glow"
                   : "text-subtitle hover:text-title"
               }`}
             >
-              Por Operario
+              Mensual
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="text-button-primary w-5 h-5" />
-            <select
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value)}
-              className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all min-w-[150px]"
-            >
-              {uniqueTeams.map(team => (
-                <option key={team} value={team}>{team}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="text-button-primary w-5 h-5" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              max={today}
-              className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
-            />
-          </div>
-          <button
-            onClick={() => rendimientoService.downloadExcel(detailData, stats, selectedDate, selectedTeam)}
-            disabled={loading || detailData.length === 0}
-            className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
-          >
-            <FileDown className="w-4 h-4" />
-            Descargar Excel
-          </button>
+
+          {viewMode === "tasks" ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Users className="text-button-primary w-5 h-5" />
+                <select
+                  value={selectedTeam}
+                  onChange={(e) => setSelectedTeam(e.target.value)}
+                  className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all min-w-[150px]"
+                >
+                  {uniqueTeams.map(team => (
+                    <option key={team} value={team}>{team}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="text-button-primary w-5 h-5" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  max={today}
+                  className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
+                />
+              </div>
+              <button
+                onClick={() => rendimientoService.downloadExcel(detailData, stats, selectedDate, selectedTeam)}
+                disabled={loading || detailData.length === 0}
+                className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
+              >
+                <FileDown className="w-4 h-4" />
+                Descargar Excel
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Calendar className="text-button-primary w-5 h-5" />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
+              >
+                {MONTHS.map((name, i) => (
+                  <option key={i + 1} value={i + 1}>{name}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all w-20 text-center"
+              />
+            </div>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-background-secondary p-5 rounded-2xl border border-border-card shadow-sm flex items-center gap-4">
           <div className="bg-icon-bg p-3 rounded-xl text-button-primary">
-            {viewMode === "operators" ? <User className="w-6 h-6" /> : <Users className="w-6 h-6" />}
+            <Users className="w-6 h-6" />
           </div>
           <div>
             <p className="text-subtitle text-xs font-bold uppercase tracking-wider">
-              {viewMode === "operators" ? "Operarios" : "Equipos"}
+              {viewMode === "monthly" ? "Equipos" : "Equipos"}
             </p>
             <p className="text-2xl font-black text-title">{displayStats.card1}</p>
           </div>
@@ -220,12 +227,8 @@ export default function Rendimiento() {
             <Activity className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-subtitle text-xs font-bold uppercase tracking-wider">
-              {viewMode === "operators" ? "Prod. Real (und/h)" : "Eficiencia Prom."}
-            </p>
-            <p className="text-2xl font-black text-title">
-              {viewMode === "operators" ? displayStats.card2.toFixed(1) : `${displayStats.card2}%`}
-            </p>
+            <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Eficiencia Prom.</p>
+            <p className="text-2xl font-black text-title">{displayStats.card2}%</p>
           </div>
         </div>
         <div className="bg-background-secondary p-5 rounded-2xl border border-border-card shadow-sm flex items-center gap-4">
@@ -251,9 +254,11 @@ export default function Rendimiento() {
       <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
         <div className="flex justify-between items-center flex-wrap gap-4">
           <h2 className="text-lg font-bold text-title">
-            {viewMode === "operators" ? "Rendimiento por Operario" : "Detalle de Ejecución"}
+            {viewMode === "monthly" ? "Rendimiento Mensual por Equipo" : "Detalle de Ejecución"}
           </h2>
-          <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+          {viewMode === "tasks" && (
+            <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+          )}
         </div>
 
         {error && (
@@ -262,8 +267,86 @@ export default function Rendimiento() {
           </div>
         )}
 
-        {viewMode === "operators" ? (
-          <DataTable type="operators" data={filteredData} loading={loading} />
+        {viewMode === "monthly" ? (
+          monthlyData && monthlyData.teams.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-background-primary border border-dashed border-border-card rounded-3xl">
+              <p className="text-subtitle font-bold">No hay datos disponibles para este mes</p>
+            </div>
+          ) : loading ? (
+            <p className="text-center text-subtitle py-10">Cargando datos...</p>
+          ) : (
+            <div className="space-y-4">
+              {monthlyData?.teams.map((team) => {
+                const rendColor = team.rendimiento_promedio !== null
+                  ? (team.rendimiento_promedio >= 85 ? 'text-green-600' : team.rendimiento_promedio >= 60 ? 'text-yellow-600' : 'text-red-600')
+                  : 'text-subtitle';
+                const isExpanded = expandedTeam === team.team_id;
+
+                return (
+                  <div key={team.team_id} className="border border-border-card rounded-2xl overflow-hidden shadow-sm">
+                    <button
+                      onClick={() => setExpandedTeam(isExpanded ? null : team.team_id)}
+                      className="w-full bg-gradient-to-r from-button-primary/5 to-button-primary/10 px-5 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-border-card hover:from-button-primary/10 hover:to-button-primary/20 transition-all text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? <ChevronDown className="w-5 h-5 text-subtitle" /> : <ChevronRight className="w-5 h-5 text-subtitle" />}
+                        <h3 className="font-black text-lg text-title">{team.equipo}</h3>
+                        <span className="text-sm font-bold text-subtitle">
+                          {team.dias_con_datos} días · {team.tareas_completadas}/{team.tareas_totales} tareas
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-6 text-sm">
+                        <div className="text-center">
+                          <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Rendimiento Prom.</p>
+                          <p className={`font-black text-base ${rendColor}`}>
+                            {team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : "N/A"}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Progreso</p>
+                          <p className="font-black text-base text-button-primary">{team.progreso}%</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full border-collapse">
+                          <thead className="bg-background-primary text-subtitle text-xs uppercase tracking-wider">
+                            <tr>
+                              <th className="px-3 py-3 text-left font-bold">Fecha</th>
+                              <th className="px-3 py-3 text-right font-bold">Tareas Totales</th>
+                              <th className="px-3 py-3 text-right font-bold">Tareas Comp.</th>
+                              <th className="px-3 py-3 text-right font-bold">Rendimiento</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {team.dias.map((dia, i) => {
+                              const dRendColor = dia.rendimiento !== null
+                                ? (dia.rendimiento >= 85 ? 'text-green-600 font-bold' : dia.rendimiento >= 60 ? 'text-yellow-600 font-bold' : 'text-red-600 font-bold')
+                                : 'text-subtitle';
+                              return (
+                                <tr key={i} className="hover:bg-background-primary text-sm transition-colors even:bg-background-primary/50">
+                                  <td className="px-3 py-2.5 border-b border-border-card">
+                                    {new Date(dia.date).toLocaleDateString("es-ES", { day: "2-digit", month: "long" })}
+                                  </td>
+                                  <td className="px-3 py-2.5 border-b border-border-card text-right">{dia.tareas_totales}</td>
+                                  <td className="px-3 py-2.5 border-b border-border-card text-right">{dia.tareas_completadas}</td>
+                                  <td className={`px-3 py-2.5 border-b border-border-card text-right ${dRendColor}`}>
+                                    {dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : "N/A"}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
         ) : loading ? (
           <p className="text-center text-subtitle py-10">Cargando datos...</p>
         ) : filteredData.length === 0 ? (

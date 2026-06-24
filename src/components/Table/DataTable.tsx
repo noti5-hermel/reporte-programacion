@@ -8,7 +8,7 @@ interface DataItem {
 }
 
 interface DataTableProps {
-  type: "general" | "resumen" | "disponibilidad" | "rendimiento" | "operators";
+  type: "general" | "resumen" | "rendimiento" | "operators";
   data?: DataItem[];
   loading?: boolean;
 }
@@ -22,16 +22,6 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
   // 🔹 Definir columnas basadas en el tipo de tabla
   const columns = useMemo(() => {
     switch (type) {
-      case "disponibilidad":
-        return [
-          "Código",
-          "Descripción",
-          "Disponible",
-          "Mínimo",
-          "Reorden",
-          "Días Disponibles",
-          "Fecha de Carga",
-        ];
       case "general":
         return [
           "Fecha", "Código", "Descripción", "Lote", "Tipo", "Actividad",

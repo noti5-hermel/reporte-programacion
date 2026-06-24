@@ -35,6 +35,36 @@ export interface RendimientoResponse {
   detail: RendimientoDetailItem[];
 }
 
+export interface TeamMonthlyDay {
+  date: string;
+  rendimiento: number | null;
+  tareas_totales: number;
+  tareas_completadas: number;
+}
+
+export interface TeamMonthly {
+  equipo: string;
+  team_id: string;
+  dias: TeamMonthlyDay[];
+  dias_con_datos: number;
+  rendimiento_promedio: number | null;
+  tareas_totales: number;
+  tareas_completadas: number;
+  progreso: number;
+}
+
+export interface RendimientoMensualStats {
+  equipos: number;
+  eficiencia_promedio: number;
+  tareas_completadas: number;
+  tareas_totales: number;
+}
+
+export interface RendimientoMensualResponse {
+  stats: RendimientoMensualStats;
+  teams: TeamMonthly[];
+}
+
 function formatShortDate(dateString: string) {
   if (!dateString) return "";
   const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -290,5 +320,16 @@ export const rendimientoService = {
 
     return response.json();
   },
+
+  async getRendimientoMensual(year: number, month: number): Promise<RendimientoMensualResponse> {
+    const params = new URLSearchParams({ year: String(year), month: String(month) });
+    const url = `${REPORTS_API_URL}/api/v1/reports/rendimiento/mensual?${params}`;
+    const response = await fetchWithAuth(url);
+    if (!response.ok) {
+      throw new Error("Failed to fetch monthly rendimiento data");
+    }
+    return response.json();
+  },
+
   downloadExcel: downloadRendimientoExcel,
 };

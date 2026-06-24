@@ -68,23 +68,21 @@ export default function GestionPermisos() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <p className="text-slate-500">Cargando usuarios...</p>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-button-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
-        <div className="bg-indigo-100 p-3 rounded-lg text-indigo-600">
+    <div className="flex flex-col gap-6">
+      <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex items-center gap-4">
+        <div className="bg-icon-bg p-3 rounded-xl text-button-primary">
           <Shield className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Gestión de Permisos</h1>
-          <p className="text-slate-500 text-sm">
+          <h1 className="text-2xl font-black tracking-tight text-title">Gestión de Permisos</h1>
+          <p className="text-subtitle text-sm">
             Administra qué reportes puede ver cada usuario
           </p>
         </div>
@@ -92,7 +90,7 @@ export default function GestionPermisos() {
 
       {message && (
         <div
-          className={`p-4 rounded-lg border text-sm ${
+          className={`p-4 rounded-xl border text-sm font-bold ${
             message.type === "success"
               ? "bg-green-50 text-green-700 border-green-200"
               : "bg-red-50 text-red-700 border-red-200"

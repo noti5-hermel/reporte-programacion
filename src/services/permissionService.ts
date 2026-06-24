@@ -46,7 +46,4 @@ export const REPORT_OPTIONS = [
   { key: "general", label: "Tabla General" },
   { key: "rendimiento", label: "Rendimiento" },
   { key: "resumen", label: "Tabla Resumida" },
-  { key: "comparacion", label: "Comparación" },
-  { key: "formato", label: "Formato" },
-  { key: "disponibilidad", label: "Disponibilidad" },
 ] as const;

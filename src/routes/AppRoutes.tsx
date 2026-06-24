@@ -5,9 +5,7 @@ import LoginPage from "../pages/LoginPage";
 import General from "../pages/General";
 import Resumen from "../pages/Resumen";
 import Rendimiento from "../pages/Rendimiento";
-import Comparacion from "../pages/Comparacion";
-import FormatoPage from "../pages/FormatoPage";
-import DisponibilidadPage from "../pages/Disponibilidad";
+
 import GestionPermisos from "../pages/GestionPermisos";
 import PrivateRoute from "./PrivateRoute";
 
@@ -47,30 +45,7 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
-      {
-        path: "/comparacion",
-        element: (
-          <PrivateRoute>
-            <Comparacion />
-          </PrivateRoute>
-        ),
-      },
-      {
-        path: "/formato",
-        element: (
-          <PrivateRoute>
-            <FormatoPage />
-          </PrivateRoute>
-        ),
-      },
-      {
-        path: "/disponibilidad",
-        element: (
-          <PrivateRoute>
-            <DisponibilidadPage />
-          </PrivateRoute>
-        ),
-      },
+
       {
         path: "/permisos",
         element: (
