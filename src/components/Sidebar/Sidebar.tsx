@@ -36,12 +36,6 @@ function useUserReports() {
     }
 
     const cached = localStorage.getItem("user_reports");
-    if (cached) {
-      try {
-        setAllowedReports(new Set(JSON.parse(cached)));
-        return;
-      } catch {}
-    }
 
     permissionService
       .getMyPermissions()
@@ -50,7 +44,15 @@ function useUserReports() {
         setAllowedReports(reports);
         localStorage.setItem("user_reports", JSON.stringify([...reports]));
       })
-      .catch(() => setAllowedReports(new Set()));
+      .catch(() => {
+        if (cached) {
+          try {
+            setAllowedReports(new Set(JSON.parse(cached)));
+            return;
+          } catch {}
+        }
+        setAllowedReports(new Set());
+      });
   }, [user?.username, user?.role]);
 
   return allowedReports;

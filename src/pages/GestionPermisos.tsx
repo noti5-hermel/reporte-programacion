@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Shield, Save } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Shield } from "lucide-react";
 import { permissionService, REPORT_OPTIONS } from "../services/permissionService";
 import type { UserItem } from "../services/permissionService";
 import { useAuth } from "../hooks/useAuth";
@@ -8,9 +8,11 @@ export default function GestionPermisos() {
   useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [userReports, setUserReports] = useState<Record<string, Set<string>>>({});
+  const userReportsRef = useRef(userReports);
+  userReportsRef.current = userReports;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const loadData = async () => {
     setLoading(true);
@@ -31,7 +33,7 @@ export default function GestionPermisos() {
       );
       setUserReports(reportsMap);
     } catch (err) {
-      setMessage({ type: "error", text: "Error al cargar datos" });
+      console.error("Error al cargar datos", err);
     } finally {
       setLoading(false);
     }
@@ -50,20 +52,21 @@ export default function GestionPermisos() {
       next[userId] = set;
       return next;
     });
-  };
 
-  const saveUser = async (userId: string) => {
-    setSaving(userId);
-    setMessage(null);
-    try {
-      const reports = Array.from(userReports[userId] || []);
-      await permissionService.setPermissions(userId, reports);
-      setMessage({ type: "success", text: "Permisos guardados correctamente" });
-    } catch {
-      setMessage({ type: "error", text: "Error al guardar permisos" });
-    } finally {
-      setSaving(null);
+    if (debounceTimers.current[userId]) {
+      clearTimeout(debounceTimers.current[userId]);
     }
+    debounceTimers.current[userId] = setTimeout(async () => {
+      setSaving(userId);
+      try {
+        const reports = Array.from(userReportsRef.current[userId] || []);
+        await permissionService.setPermissions(userId, reports);
+      } catch {
+        console.error("Error al guardar permisos");
+      } finally {
+        setSaving(null);
+      }
+    }, 600);
   };
 
   if (loading) {
@@ -88,18 +91,6 @@ export default function GestionPermisos() {
         </div>
       </div>
 
-      {message && (
-        <div
-          className={`p-4 rounded-xl border text-sm font-bold ${
-            message.type === "success"
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-red-50 text-red-700 border-red-200"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
       <div className="bg-background-secondary rounded-2xl border border-border-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -112,13 +103,12 @@ export default function GestionPermisos() {
                     {opt.label}
                   </th>
                 ))}
-                <th className="text-center px-4 py-3 font-bold text-subtitle text-xs uppercase tracking-wider">Acción</th>
               </tr>
             </thead>
             <tbody>
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={REPORT_OPTIONS.length + 3} className="text-center py-8 text-subtitle">
+                  <td colSpan={REPORT_OPTIONS.length + 2} className="text-center py-8 text-subtitle">
                     No se encontraron usuarios
                   </td>
                 </tr>
@@ -129,7 +119,7 @@ export default function GestionPermisos() {
                 const isSaving = saving === u.id;
 
                 return (
-                  <tr key={u.id} className="border-b border-border-card hover:bg-background-primary transition-colors">
+                  <tr key={u.id} className={`border-b border-border-card hover:bg-background-primary transition-colors ${isSaving ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="font-bold text-title">{u.full_name || u.username}</div>
                       <div className="text-xs text-subtitle">{u.username}</div>
@@ -148,22 +138,12 @@ export default function GestionPermisos() {
                         <input
                           type="checkbox"
                           checked={isAdmin || reports.has(opt.key)}
-                          disabled={isAdmin}
+                          disabled={isAdmin || isSaving}
                           onChange={(e) => toggleReport(u.id, opt.key, e.target.checked)}
                           className="w-4 h-4 rounded border-border-card text-button-primary focus:ring-button-primary/20 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                         />
                       </td>
                     ))}
-                    <td className="text-center px-4 py-3">
-                      <button
-                        onClick={() => saveUser(u.id)}
-                        disabled={isSaving}
-                        className="inline-flex items-center gap-1.5 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
-                      >
-                        <Save className="w-3.5 h-3.5" />
-                        {isSaving ? "Guardando..." : "Guardar"}
-                      </button>
-                    </td>
                   </tr>
                 );
               })}
