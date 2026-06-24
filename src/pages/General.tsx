@@ -1,7 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
-import { taskPerformanceService } from "../services/taskPerformanceService";
+import { completedTasksService } from "../services/completedTasksService";
+
+const PAGE_SIZE = 50;
 
 export default function General() {
   const [data, setData] = useState<any[]>([]);
@@ -10,58 +12,53 @@ export default function General() {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await completedTasksService.getCompletedTasks(
+        page,
+        PAGE_SIZE,
+        startDate || undefined,
+        endDate || undefined
+      );
+      setData(result.data);
+      setTotalPages(result.total_pages);
+      setTotal(result.total);
+    } catch (err) {
+      setError("Error fetching data");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, startDate, endDate]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await taskPerformanceService.getTaskPerformance();
-        const transformed = Array.isArray(result)
-          ? result.map((item: any) => ({
-              ...item,
-              productividad: item.productividad ?? item.horas ?? item.horas_unitarias ?? null,
-              cantidad: item.cantidad ?? item.cantidad_real ?? null,
-              // API change: prefer `minutes`; keep fallbacks for compatibility
-              minutos: item.minutes ?? item.minutos ?? item.minutos_estimados ?? null,
-              totalHoras: item.totalHoras ?? item.total_horas ?? null,
-              personas: item.personas ?? null,
-            }))
-          : result;
-        setData(transformed);
-      } catch (err) {
-        setError("Error fetching data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const filteredData = useMemo(() => {
-    let filtered = data;
+    if (!searchQuery) return data;
+    const q = searchQuery.toLowerCase();
+    return data.filter((item) =>
+      Object.values(item).some((value) =>
+        String(value).toLowerCase().includes(q)
+      )
+    );
+  }, [data, searchQuery]);
 
-    if (searchQuery) {
-      filtered = filtered.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setStartDate(e.target.value);
+    setPage(1);
+  };
 
-    if (startDate) {
-      filtered = filtered.filter(
-        (item) => new Date(item.fecha) >= new Date(startDate)
-      );
-    }
-
-    if (endDate) {
-      filtered = filtered.filter(
-        (item) => new Date(item.fecha) <= new Date(endDate)
-      );
-    }
-
-    return filtered;
-  }, [data, searchQuery, startDate, endDate]);
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndDate(e.target.value);
+    setPage(1);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,7 +74,7 @@ export default function General() {
             id="start-date"
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={handleStartDateChange}
             className="px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
           />
         </div>
@@ -87,7 +84,7 @@ export default function General() {
             id="end-date"
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={handleEndDateChange}
             className="px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
           />
         </div>
@@ -100,7 +97,35 @@ export default function General() {
       ) : error ? (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">{error}</div>
       ) : (
-        <DataTable type="general" data={filteredData} />
+        <>
+          <DataTable type="general" data={filteredData} />
+
+          <div className="flex items-center justify-between bg-background-secondary border border-border-card rounded-2xl px-4 sm:px-6 py-3 shadow-sm">
+            <span className="text-sm text-subtitle">
+              Total: <span className="font-bold text-title">{total}</span> registros
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 rounded-xl text-sm font-bold border border-border-card bg-background-primary hover:bg-border-card disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-subtitle px-2">
+                Página <span className="font-bold text-title">{page}</span> de{" "}
+                <span className="font-bold text-title">{totalPages}</span>
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 rounded-xl text-sm font-bold border border-border-card bg-background-primary hover:bg-border-card disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

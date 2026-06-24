@@ -18,13 +18,12 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
         <td className={cellClass}>{row.codigo}</td>
         <td className={cellClass}>{row.descripcion}</td>
         <td className={cellClass}>{row.lote}</td>
-        <td className={cellClass}>{row.tipo}</td>
         <td className={cellClass}>{row.actividad}</td>
-        <td className={`${cellClass} text-right`}>{row.productividad}</td>
-        <td className={`${cellClass} text-right`}>{row.cantidad}</td>
-        <td className={`${cellClass} text-right`}>{row.minutos}</td>
+        <td className={`${cellClass} text-right`}>{row.produccion}</td>
         <td className={`${cellClass} text-right`}>{row.personas}</td>
-        <td className={`${cellClass} text-right`}>{row.totalHoras}</td>
+        <td className={`${cellClass} text-right`}>{row.cantidad}</td>
+        <td className={`${cellClass} text-right font-mono`}>{row.duracion}</td>
+        <td className={`${cellClass} text-right font-mono`}>{row.horas}</td>
       </tr>
     );
   }
