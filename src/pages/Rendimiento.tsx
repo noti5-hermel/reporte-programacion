@@ -11,6 +11,11 @@ const MONTHS = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
+function parseISODate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export default function Rendimiento() {
   const [detailData, setDetailData] = useState<RendimientoDetailItem[]>([]);
   const [stats, setStats] = useState<RendimientoStats>({
@@ -328,7 +333,7 @@ export default function Rendimiento() {
                               return (
                                 <tr key={i} className="hover:bg-background-primary text-sm transition-colors even:bg-background-primary/50">
                                   <td className="px-3 py-2.5 border-b border-border-card">
-                                    {new Date(dia.date).toLocaleDateString("es-ES", { day: "2-digit", month: "long" })}
+                                    {parseISODate(dia.date).toLocaleDateString("es-ES", { day: "2-digit", month: "long" })}
                                   </td>
                                   <td className="px-3 py-2.5 border-b border-border-card text-right">{dia.tareas_totales}</td>
                                   <td className="px-3 py-2.5 border-b border-border-card text-right">{dia.tareas_completadas}</td>
