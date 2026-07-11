@@ -128,11 +128,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = localStorage.getItem('user');
     if (storedToken && storedUser) return;
 
+    let timeoutId: ReturnType<typeof setTimeout>;
+
     const checkAuthHealth = async () => {
-      const healthUrl = import.meta.env.VITE_AUTH_HEALTH_URL || "http://192.168.1.155:8081/api/auth/health";
+      const healthUrl = import.meta.env.VITE_AUTH_HEALTH_URL;
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        timeoutId = setTimeout(() => controller.abort(), 3000);
 
         const response = await fetch(healthUrl, {
           signal: controller.signal,
@@ -152,7 +154,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     checkAuthHealth();
-  }, []);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [token, user]);
 
   useEffect(() => {
     if (isLoggingOut.current || isProcessingAuth.current || user || token) return;
