@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from "react";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
+import { COLUMN_DESCRIPTIONS } from "./ColumnHelp";
 
 interface DataItem {
   [key: string]: any;
@@ -100,6 +101,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
         <table className="min-w-full border-collapse">
           <TableHeader
             columns={columns}
+            descriptions={COLUMN_DESCRIPTIONS[type]}
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSort={handleSort}

@@ -1,9 +1,11 @@
 // src/components/Table/TableHeader.tsx
 import React from "react";
 import { ArrowUp, ArrowDown } from "lucide-react";
+import { ColumnHelp } from "./ColumnHelp";
 
 interface TableHeaderProps {
   columns: string[];
+  descriptions?: Record<string, string>;
   sortColumn?: string;
   sortDirection?: "asc" | "desc";
   onSort?: (column: string) => void;
@@ -11,6 +13,7 @@ interface TableHeaderProps {
 
 const TableHeader: React.FC<TableHeaderProps> = ({
   columns,
+  descriptions,
   sortColumn,
   sortDirection,
   onSort,
@@ -30,6 +33,11 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             >
               <div className="flex items-center gap-1">
                 {col}
+                {descriptions?.[col] && (
+                  <span onClick={(e) => e.stopPropagation()}>
+                    <ColumnHelp description={descriptions[col]} />
+                  </span>
+                )}
                 {isSorted &&
                   (sortDirection === "asc" ? (
                     <ArrowUp className="w-3 h-3 text-button-primary" />

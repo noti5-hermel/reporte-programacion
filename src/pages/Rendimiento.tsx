@@ -4,6 +4,7 @@ import { rendimientoService } from "../services/rendimientoService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
 import type { RendimientoStats, RendimientoDetailItem, RendimientoMensualResponse } from "../services/rendimientoService";
 import { Calendar, Users, Activity, CheckCircle, FileDown, ChevronDown, ChevronRight, ShieldOff } from "lucide-react";
+import { ColumnHelp, COLUMN_DESCRIPTIONS } from "../components/Table/ColumnHelp";
 
 type ViewMode = "tasks" | "monthly";
 
@@ -416,20 +417,20 @@ export default function Rendimiento() {
                     <table className="min-w-full border-collapse">
                       <thead className="bg-background-primary text-subtitle text-xs uppercase tracking-wider">
                         <tr>
-                          <th className="px-3 py-3 text-left font-bold">Código</th>
-                          <th className="px-3 py-3 text-left font-bold">Descripción</th>
-                          <th className="px-3 py-3 text-left font-bold">Material</th>
-                          <th className="px-3 py-3 text-left font-bold">Lote</th>
-                          <th className="px-3 py-3 text-right font-bold">Cant. Plan.</th>
-                          <th className="px-3 py-3 text-right font-bold">Cant. Real</th>
-                          <th className="px-3 py-3 text-center font-bold">Inicio Plan</th>
-                          <th className="px-3 py-3 text-center font-bold">Fin Plan</th>
-                          <th className="px-3 py-3 text-right font-bold">T. Plan</th>
-                          <th className="px-3 py-3 text-center font-bold">Inicio Real</th>
-                          <th className="px-3 py-3 text-center font-bold">Fin Real</th>
-                          <th className="px-3 py-3 text-right font-bold">T. Real</th>
-                          <th className="px-3 py-3 text-right font-bold">Rendimiento</th>
-                          <th className="px-3 py-3 text-left font-bold">Comentarios</th>
+                          <th className="px-3 py-3 text-left font-bold"><span className="inline-flex items-center gap-1">Código<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Código"]} /></span></span></th>
+                          <th className="px-3 py-3 text-left font-bold"><span className="inline-flex items-center gap-1">Descripción<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Descripción"]} /></span></span></th>
+                          <th className="px-3 py-3 text-left font-bold"><span className="inline-flex items-center gap-1">Material<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Material"]} /></span></span></th>
+                          <th className="px-3 py-3 text-left font-bold"><span className="inline-flex items-center gap-1">Lote<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Lote"]} /></span></span></th>
+                          <th className="px-3 py-3 text-right font-bold"><span className="inline-flex items-center gap-1">Cant. Plan.<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Cant. Plan."]} /></span></span></th>
+                          <th className="px-3 py-3 text-right font-bold"><span className="inline-flex items-center gap-1">Cant. Real<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Cant. Real"]} /></span></span></th>
+                          <th className="px-3 py-3 text-center font-bold"><span className="inline-flex items-center gap-1">Inicio Plan<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description="Fecha y hora de inicio planificada." /></span></span></th>
+                          <th className="px-3 py-3 text-center font-bold"><span className="inline-flex items-center gap-1">Fin Plan<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description="Fecha y hora de finalización planificada." /></span></span></th>
+                          <th className="px-3 py-3 text-right font-bold"><span className="inline-flex items-center gap-1">T. Plan<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description="Tiempo planificado de ejecución (minutos)." /></span></span></th>
+                          <th className="px-3 py-3 text-center font-bold"><span className="inline-flex items-center gap-1">Inicio Real<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Inicio Real"]} /></span></span></th>
+                          <th className="px-3 py-3 text-center font-bold"><span className="inline-flex items-center gap-1">Fin Real<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description="Fecha y hora de finalización real." /></span></span></th>
+                          <th className="px-3 py-3 text-right font-bold"><span className="inline-flex items-center gap-1">T. Real<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["T. Real"]} /></span></span></th>
+                          <th className="px-3 py-3 text-right font-bold"><span className="inline-flex items-center gap-1">Rendimiento<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Rendimiento"]} /></span></span></th>
+                          <th className="px-3 py-3 text-left font-bold"><span className="inline-flex items-center gap-1">Comentarios<span onClick={(e: React.MouseEvent) => e.stopPropagation()}><ColumnHelp description={COLUMN_DESCRIPTIONS.rendimiento["Comentarios"]} /></span></span></th>
                         </tr>
                       </thead>
                       <tbody>
