@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { SidebarItem } from "./SidebarItem";
 import { useAuth } from "../../hooks/useAuth";
-import { permissionService, REPORT_OPTIONS } from "../../services/permissionService";
+import { useReportPermissions } from "../../hooks/useReportPermissions";
 import {
   ChevronLeft,
   TableProperties,
@@ -22,45 +22,9 @@ const ALL_ITEMS: NavItem[] = [
   { to: "/resumen", label: "Tabla Resumida", icon: <ClipboardList />, reportKey: "resumen" },
 ];
 
-function useUserReports() {
-  const { user } = useAuth();
-  const [allowedReports, setAllowedReports] = useState<Set<string> | null>(null);
-
-  useEffect(() => {
-    if (!user?.username) return;
-
-    const isAdmin = user.role === "ADMIN";
-    if (isAdmin) {
-      setAllowedReports(new Set(REPORT_OPTIONS.map((r) => r.key)));
-      return;
-    }
-
-    const cached = localStorage.getItem("user_reports");
-
-    permissionService
-      .getMyPermissions()
-      .then((res) => {
-        const reports = new Set(res.reports);
-        setAllowedReports(reports);
-        localStorage.setItem("user_reports", JSON.stringify([...reports]));
-      })
-      .catch(() => {
-        if (cached) {
-          try {
-            setAllowedReports(new Set(JSON.parse(cached)));
-            return;
-          } catch {}
-        }
-        setAllowedReports(new Set());
-      });
-  }, [user?.username, user?.role]);
-
-  return allowedReports;
-}
-
 const Sidebar = () => {
   const { user } = useAuth();
-  const allowedReports = useUserReports();
+  const allowedReports = useReportPermissions();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isAdmin = user?.role === "ADMIN";

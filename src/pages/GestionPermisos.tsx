@@ -121,7 +121,7 @@ export default function GestionPermisos() {
                 return (
                   <tr key={u.id} className={`border-b border-border-card hover:bg-background-primary transition-colors ${isSaving ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3">
-                      <div className="font-bold text-title">{u.full_name || u.username}</div>
+                      <div className="font-bold text-title">{u.username}</div>
                       <div className="text-xs text-subtitle">{u.username}</div>
                     </td>
                     <td className="px-4 py-3">

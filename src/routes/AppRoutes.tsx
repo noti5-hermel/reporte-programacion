@@ -8,6 +8,7 @@ import Rendimiento from "../pages/Rendimiento";
 
 import GestionPermisos from "../pages/GestionPermisos";
 import PrivateRoute from "./PrivateRoute";
+import ReportIndex from "../pages/ReportIndex";
 
 const router = createBrowserRouter([
   {
@@ -20,7 +21,14 @@ const router = createBrowserRouter([
     path: "/",
     element: <MainLayout />,
     children: [
-      { index: true, element: <Navigate to="/general" replace /> },
+      {
+        index: true,
+        element: (
+          <PrivateRoute>
+            <ReportIndex />
+          </PrivateRoute>
+        ),
+      },
       {
         path: "/general",
         element: (

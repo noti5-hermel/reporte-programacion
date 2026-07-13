@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { rendimientoService } from "../services/rendimientoService";
+import { useReportPermissions } from "../hooks/useReportPermissions";
 import type { RendimientoStats, RendimientoDetailItem, RendimientoMensualResponse } from "../services/rendimientoService";
-import { Calendar, Users, Activity, CheckCircle, FileDown, ChevronDown, ChevronRight } from "lucide-react";
+import { Calendar, Users, Activity, CheckCircle, FileDown, ChevronDown, ChevronRight, ShieldOff } from "lucide-react";
 
 type ViewMode = "tasks" | "monthly";
 
@@ -17,6 +18,7 @@ function parseISODate(dateStr: string): Date {
 }
 
 export default function Rendimiento() {
+  const allowed = useReportPermissions();
   const [detailData, setDetailData] = useState<RendimientoDetailItem[]>([]);
   const [stats, setStats] = useState<RendimientoStats>({
     equipos: 0, eficiencia_promedio: 0, tareas_completadas: 0, tareas_totales: 0, progreso: 0,
@@ -127,6 +129,28 @@ export default function Rendimiento() {
       card4: stats.progreso,
     };
   }, [stats, monthlyData, viewMode]);
+
+  if (allowed === null) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-button-primary"></div>
+      </div>
+    );
+  }
+
+  if (!allowed.has("rendimiento")) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-5">
+        <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-card flex items-center justify-center">
+          <ShieldOff className="w-8 h-8 text-subtitle" />
+        </div>
+        <h2 className="text-xl font-bold text-title">Sin acceso a este reporte</h2>
+        <p className="text-sm text-subtitle text-center max-w-md">
+          No tienes permisos para ver el reporte de rendimiento. Solicita al administrador que te brinde acceso.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6 bg-background-primary min-h-screen">

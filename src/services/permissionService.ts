@@ -3,7 +3,6 @@ import { REPORTS_API_URL, fetchWithAuth } from "../config/api";
 export interface UserItem {
   id: string;
   username: string;
-  full_name: string | null;
   role: string;
 }
 

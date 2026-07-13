@@ -2,15 +2,18 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { completedTasksService } from "../services/completedTasksService";
+import { useReportPermissions } from "../hooks/useReportPermissions";
+import { ShieldOff } from "lucide-react";
 
 const PAGE_SIZE = 50;
 
 export default function General() {
+  const allowed = useReportPermissions();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -49,6 +52,28 @@ export default function General() {
       )
     );
   }, [data, searchQuery]);
+
+  if (allowed === null) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-button-primary"></div>
+      </div>
+    );
+  }
+
+  if (!allowed.has("general")) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-5">
+        <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-card flex items-center justify-center">
+          <ShieldOff className="w-8 h-8 text-subtitle" />
+        </div>
+        <h2 className="text-xl font-bold text-title">Sin acceso a este reporte</h2>
+        <p className="text-sm text-subtitle text-center max-w-md">
+          No tienes permisos para ver el reporte de la tabla general. Solicita al administrador que te brinde acceso.
+        </p>
+      </div>
+    );
+  }
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStartDate(e.target.value);

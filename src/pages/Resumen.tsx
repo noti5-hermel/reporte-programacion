@@ -2,9 +2,12 @@ import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { productivityService } from "../services/productivityService";
+import { useReportPermissions } from "../hooks/useReportPermissions";
+import { ShieldOff } from "lucide-react";
 import * as XLSX from "xlsx";
 
 export default function Resumen() {
+  const allowed = useReportPermissions();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -50,6 +53,28 @@ export default function Resumen() {
       )
     );
   }, [data, searchQuery]);
+
+  if (allowed === null) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-button-primary"></div>
+      </div>
+    );
+  }
+
+  if (!allowed.has("resumen")) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-5">
+        <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-card flex items-center justify-center">
+          <ShieldOff className="w-8 h-8 text-subtitle" />
+        </div>
+        <h2 className="text-xl font-bold text-title">Sin acceso a este reporte</h2>
+        <p className="text-sm text-subtitle text-center max-w-md">
+          No tienes permisos para ver el reporte resumido. Solicita al administrador que te brinde acceso.
+        </p>
+      </div>
+    );
+  }
 
   const handleClearFilters = () => {
     setSelectedYear(null);

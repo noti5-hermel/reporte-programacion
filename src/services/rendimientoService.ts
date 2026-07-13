@@ -328,7 +328,49 @@ export const rendimientoService = {
     if (!response.ok) {
       throw new Error("Failed to fetch monthly rendimiento data");
     }
-    return response.json();
+    const raw = await response.json();
+
+    const grouped: Record<string, TeamMonthly> = {};
+    for (const row of raw.teams as any[]) {
+      const key = row.team_id;
+      if (!grouped[key]) {
+        grouped[key] = {
+          equipo: row.equipo,
+          team_id: row.team_id,
+          dias: [],
+          dias_con_datos: 0,
+          rendimiento_promedio: null,
+          tareas_totales: 0,
+          tareas_completadas: 0,
+          progreso: 0,
+        };
+      }
+      const team = grouped[key];
+      team.dias.push({
+        date: row.date,
+        rendimiento: row.rendimiento != null ? Number(row.rendimiento) : null,
+        tareas_totales: Number(row.tareas_totales),
+        tareas_completadas: Number(row.tareas_completadas),
+      });
+      team.tareas_totales += Number(row.tareas_totales);
+      team.tareas_completadas += Number(row.tareas_completadas);
+    }
+
+    for (const team of Object.values(grouped)) {
+      team.dias_con_datos = team.dias.length;
+      const rends = team.dias.filter((d) => d.rendimiento != null).map((d) => d.rendimiento!);
+      team.rendimiento_promedio = rends.length > 0
+        ? Math.round(rends.reduce((a, b) => a + b, 0) / rends.length * 10) / 10
+        : null;
+      team.progreso = team.tareas_totales > 0
+        ? Math.round((team.tareas_completadas / team.tareas_totales) * 100)
+        : 0;
+    }
+
+    return {
+      stats: raw.stats,
+      teams: Object.values(grouped),
+    };
   },
 
   downloadExcel: downloadRendimientoExcel,
