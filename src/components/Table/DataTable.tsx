@@ -1,5 +1,5 @@
 // src/components/Table/DataTable.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { COLUMN_DESCRIPTIONS } from "./ColumnHelp";
@@ -18,7 +18,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(30);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
 
   // 🔹 Definir columnas basadas en el tipo de tabla
   const columns = useMemo(() => {
@@ -49,6 +49,10 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
         ];
     }
   }, [type]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data]);
 
   // 🔹 Función para manejar el ordenamiento
   const handleSort = (column: string) => {

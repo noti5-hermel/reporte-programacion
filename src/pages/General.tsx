@@ -1,11 +1,9 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { completedTasksService } from "../services/completedTasksService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
 import { ShieldOff } from "lucide-react";
-
-const PAGE_SIZE = 500;
 
 export default function General() {
   const allowed = useReportPermissions();
@@ -15,43 +13,31 @@ export default function General() {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [fetchKey, setFetchKey] = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const result = await completedTasksService.getCompletedTasks(
-        page,
-        PAGE_SIZE,
+        1,
+        500,
         startDate || undefined,
-        endDate || undefined
+        endDate || undefined,
+        searchQuery || undefined
       );
       setData(result.data);
-      setTotalPages(result.total_pages);
-      setTotal(result.total);
+      setFetchKey(k => k + 1);
     } catch (err) {
       setError("Error fetching data");
     } finally {
       setLoading(false);
     }
-  }, [page, startDate, endDate]);
+  }, [startDate, endDate, searchQuery]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  const filteredData = useMemo(() => {
-    if (!searchQuery) return data;
-    const q = searchQuery.toLowerCase();
-    return data.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(q)
-      )
-    );
-  }, [data, searchQuery]);
 
   if (allowed === null) {
     return (
@@ -77,12 +63,10 @@ export default function General() {
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStartDate(e.target.value);
-    setPage(1);
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEndDate(e.target.value);
-    setPage(1);
   };
 
   return (
@@ -123,33 +107,7 @@ export default function General() {
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">{error}</div>
       ) : (
         <>
-          <DataTable type="general" data={filteredData} />
-
-          <div className="flex items-center justify-between bg-background-secondary border border-border-card rounded-2xl px-4 sm:px-6 py-3 shadow-sm">
-            <span className="text-sm text-subtitle">
-              Total: <span className="font-bold text-title">{total}</span> registros
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="px-3 py-1.5 rounded-xl text-sm font-bold border border-border-card bg-background-primary hover:bg-border-card disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-subtitle px-2">
-                Página <span className="font-bold text-title">{page}</span> de{" "}
-                <span className="font-bold text-title">{totalPages}</span>
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="px-3 py-1.5 rounded-xl text-sm font-bold border border-border-card bg-background-primary hover:bg-border-card disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Siguiente
-              </button>
-            </div>
-          </div>
+          <DataTable key={fetchKey} type="general" data={data} />
         </>
       )}
     </div>
