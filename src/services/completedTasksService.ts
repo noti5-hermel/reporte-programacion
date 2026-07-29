@@ -25,15 +25,17 @@ export interface PaginatedResponse {
 export const completedTasksService = {
   async getCompletedTasks(
     page: number = 1,
-    pageSize: number = 50,
+    pageSize: number = 500,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
+    codigo?: string
   ): Promise<PaginatedResponse> {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("page_size", String(pageSize));
     if (startDate) params.set("start_date", startDate);
     if (endDate) params.set("end_date", endDate);
+    if (codigo) params.set("codigo", codigo);
 
     const response = await fetchWithAuth(
       `${REPORTS_API_URL}/api/v1/reports/completed-tasks?${params}`
