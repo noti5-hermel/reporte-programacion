@@ -5,7 +5,7 @@ import { completedTasksService } from "../services/completedTasksService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
 import { ShieldOff } from "lucide-react";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 500;
 
 export default function General() {
   const allowed = useReportPermissions();
