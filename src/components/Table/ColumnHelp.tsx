@@ -62,6 +62,7 @@ export const COLUMN_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "Cantidad": "Cantidad real producida (unidades).",
     "Duración": "Tiempo real de ejecución en minutos.",
     "Horas": "Tiempo real de ejecución convertido a horas.",
+    "Rendimiento Calculado": "Unidades producidas por hora = 1 / (horas / cantidad).",
   },
   resumen: {
     "Código": "Código identificador del producto.",
@@ -72,6 +73,7 @@ export const COLUMN_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "Prom. Tiempo Producto": "Promedio de tiempo real por unidad producida (minutos/unidad).",
     "N° Personas": "Número promedio de personas asignadas.",
     "Total Tiempo Real": "Total de horas reales multiplicado por personas (horas-persona).",
+    "Rendimiento Calculado": "Unidades producidas por hora = 1 / (suma horas / suma cantidad).",
   },
   rendimiento: {
     "Equipo": "Equipo o línea de producción.",

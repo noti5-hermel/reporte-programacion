@@ -24,14 +24,16 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         {columns.map((col) => {
           const normalized = col.toLowerCase().replace(/\s+/g, "");
           const isSorted = sortColumn === normalized;
+          const isNumeric = ["rendimientocalculado"].includes(normalized);
+          const alignClass = isNumeric ? "text-right justify-end" : "text-left";
 
           return (
             <th
               key={col}
               onClick={() => onSort && onSort(col)}
-              className="px-3 py-3 text-left text-xs font-bold tracking-wider uppercase border-b border-border-card cursor-pointer select-none hover:bg-background-secondary transition-colors"
+              className={`px-3 py-3 text-xs font-bold tracking-wider uppercase border-b border-border-card cursor-pointer select-none hover:bg-background-secondary transition-colors ${alignClass}`}
             >
-              <div className="flex items-center gap-1">
+              <div className={`flex items-center gap-1 ${isNumeric ? "justify-end" : ""}`}>
                 {col}
                 {descriptions?.[col] && (
                   <span onClick={(e) => e.stopPropagation()}>

@@ -27,6 +27,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
         return [
           "Fecha", "Código", "Descripción", "Lote", "Actividad",
           "Producción", "Personas", "Cantidad", "Duración", "Horas",
+          "Rendimiento Calculado",
         ];
       case "operators":
         return [
@@ -45,7 +46,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
         return [
           "Código", "Descripción", "Tipo", "Suma Total Horas",
           "Cantidad producida", "Prom. Tiempo Producto", "N° Personas",
-          "Total Tiempo Real",
+          "Total Tiempo Real", "Rendimiento Calculado",
         ];
     }
   }, [type]);

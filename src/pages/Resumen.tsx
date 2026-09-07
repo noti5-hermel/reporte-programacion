@@ -30,6 +30,7 @@ export default function Resumen() {
               promTiempoProducto: item.avg_time_per_product,
               numeroPersonas: item.people,
               totalTiempoReal: item.final_metric,
+              rendimiento_calculado: item.rendimiento_calculado,
             }))
           : [];
         setData(transformed);
@@ -88,6 +89,7 @@ export default function Resumen() {
       'Tipo': item.tipo,
       'Número de Personas': item.numeroPersonas,
       'Total Tiempo Real': item.totalTiempoReal,
+      'Rendimiento Calculado': item.rendimiento_calculado,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
