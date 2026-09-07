@@ -55,6 +55,7 @@ export const COLUMN_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "Fecha": "Fecha en la que se completó la tarea.",
     "Código": "Código identificador del producto asignado.",
     "Descripción": "Nombre o descripción del producto.",
+    "Tipo": "Categoría o tipo de producto.",
     "Lote": "Número de lote al que pertenece la tarea.",
     "Actividad": "Tipo de actividad realizada (ej. envasado, sellado).",
     "Producción": "Rendimiento objetivo de la tarea (unidades por hora).",

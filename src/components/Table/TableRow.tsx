@@ -17,6 +17,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
         <td className={cellClass}>{row.fecha}</td>
         <td className={cellClass}>{row.codigo}</td>
         <td className={cellClass}>{row.descripcion}</td>
+        <td className={cellClass}>{row.tipo}</td>
         <td className={cellClass}>{row.lote}</td>
         <td className={cellClass}>{row.actividad}</td>
         <td className={`${cellClass} text-right`}>{row.produccion}</td>

@@ -25,7 +25,7 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
     switch (type) {
       case "general":
         return [
-          "Fecha", "Código", "Descripción", "Lote", "Actividad",
+          "Fecha", "Código", "Descripción", "Tipo", "Lote", "Actividad",
           "Producción", "Personas", "Cantidad", "Duración", "Horas",
           "Rendimiento Calculado",
         ];
