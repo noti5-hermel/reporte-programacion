@@ -43,6 +43,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
         <td className={`${cellClass} text-right`}>{row.numeroPersonas}</td>
         <td className={`${cellClass} text-right`}>{row.totalTiempoReal}</td>
         <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_calculado != null ? row.rendimiento_calculado.toFixed(4) : "-"}</td>
+        <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_sistema != null ? row.rendimiento_sistema : "-"}</td>
       </tr>
     );
   }

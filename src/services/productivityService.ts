@@ -9,6 +9,8 @@ export interface TaskPerformanceGroupItem {
   avg_time_per_product: number | null;
   people: number;
   final_metric: number | null;
+  rendimiento_calculado?: number | null;
+  rendimiento_sistema?: number | null;
   [key: string]: any;
 }
 

@@ -75,6 +75,7 @@ export const COLUMN_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "N° Personas": "Número promedio de personas asignadas.",
     "Total Tiempo Real": "Total de horas reales multiplicado por personas (horas-persona).",
     "Rendimiento Calculado": "Unidades producidas por hora = 1 / (suma horas / suma cantidad).",
+    "Rendimiento Sistema": "Rendimiento estándar configurado en el sistema para este código y tipo.",
   },
   rendimiento: {
     "Equipo": "Equipo o línea de producción.",

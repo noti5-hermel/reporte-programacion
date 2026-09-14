@@ -31,6 +31,7 @@ export default function Resumen() {
               numeroPersonas: item.people,
               totalTiempoReal: item.final_metric,
               rendimiento_calculado: item.rendimiento_calculado,
+              rendimiento_sistema: item.rendimiento_sistema,
             }))
           : [];
         setData(transformed);
@@ -90,6 +91,7 @@ export default function Resumen() {
       'Número de Personas': item.numeroPersonas,
       'Total Tiempo Real': item.totalTiempoReal,
       'Rendimiento Calculado': item.rendimiento_calculado,
+      'Rendimiento Sistema': item.rendimiento_sistema,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
