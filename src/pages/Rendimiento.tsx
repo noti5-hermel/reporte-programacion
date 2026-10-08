@@ -235,6 +235,14 @@ export default function Rendimiento() {
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
                 className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all w-20 text-center"
               />
+              <button
+                onClick={() => monthlyData && rendimientoService.downloadExcelMensual(monthlyData, selectedYear, selectedMonth)}
+                disabled={loading || !monthlyData || monthlyData.teams.length === 0}
+                className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
+              >
+                <FileDown className="w-4 h-4" />
+                Descargar Excel
+              </button>
             </div>
           )}
         </div>

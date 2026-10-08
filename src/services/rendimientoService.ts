@@ -302,6 +302,175 @@ async function downloadRendimientoExcel(
   window.URL.revokeObjectURL(url);
 }
 
+const MONTHS_ES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+async function downloadRendimientoMensualExcel(
+  monthlyData: RendimientoMensualResponse,
+  year: number,
+  month: number
+) {
+  const workbook = new ExcelJS.Workbook();
+  const ws = workbook.addWorksheet("Rendimiento Mensual");
+
+  const monthName = MONTHS_ES[month - 1];
+  const title = `Rendimiento Mensual - ${monthName} ${year}`;
+
+  const headers = [
+    { header: "Equipo", key: "equipo", width: 25 },
+    { header: "Días con datos", key: "dias_con_datos", width: 15 },
+    { header: "Tareas Totales", key: "tareas_totales", width: 15 },
+    { header: "Tareas Completadas", key: "tareas_completadas", width: 18 },
+    { header: "Rendimiento Prom.", key: "rendimiento_promedio", width: 18 },
+    { header: "Progreso", key: "progreso", width: 12 },
+  ];
+
+  // Title row
+  const titleRow = ws.addRow([]);
+  titleRow.height = 30;
+  const titleCell = titleRow.getCell(1);
+  titleCell.value = title;
+  titleCell.font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } };
+  titleCell.alignment = { horizontal: "center", vertical: "middle" };
+  titleRow.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4472C4" } };
+    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+  });
+  ws.mergeCells(1, 1, 1, headers.length);
+
+  // Stats row
+  const statsRow = ws.addRow([]);
+  statsRow.height = 22;
+  const statsCell = statsRow.getCell(1);
+  statsCell.value = `Equipos: ${monthlyData.stats.equipos}  |  Eficiencia Prom: ${monthlyData.stats.eficiencia_promedio}%  |  Tareas: ${monthlyData.stats.tareas_completadas}/${monthlyData.stats.tareas_totales}`;
+  statsCell.font = { bold: true, size: 10, color: { argb: "FF1A5276" } };
+  statsCell.alignment = { horizontal: "left", vertical: "middle" };
+  statsRow.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD6EAF8" } };
+    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+  });
+  ws.mergeCells(2, 1, 2, headers.length);
+
+  // Table header
+  const tableHeaderRow = ws.addRow(headers.map((c) => c.header));
+  tableHeaderRow.height = 20;
+  tableHeaderRow.font = { bold: true };
+  tableHeaderRow.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE0E0E0" } };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+  });
+
+  // Team rows
+  for (const team of monthlyData.teams) {
+    const rendColor = team.rendimiento_promedio !== null
+      ? (team.rendimiento_promedio >= 85 ? "FF107C10" : team.rendimiento_promedio >= 60 ? "FFED7D31" : "FFFF0000")
+      : "FF6B6B6B";
+
+    const rowData = [
+      team.equipo,
+      team.dias_con_datos,
+      team.tareas_totales,
+      team.tareas_completadas,
+      team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : "N/A",
+      `${team.progreso}%`,
+    ];
+
+    const dataRow = ws.addRow(rowData);
+    dataRow.eachCell((cell, colNumber) => {
+      cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      if (colNumber === 5) {
+        cell.font = { bold: true, color: { argb: rendColor } };
+      }
+      if (colNumber === 6) {
+        cell.font = { bold: true, color: { argb: "FF2E5984" } };
+      }
+    });
+
+    // Detail days rows
+    if (team.dias.length > 0) {
+      const dayHeaders = [
+        { header: "  Fecha", key: "date", width: 20 },
+        { header: "  Tareas Totales", key: "tareas_totales", width: 18 },
+        { header: "  Tareas Comp.", key: "tareas_completadas", width: 16 },
+        { header: "  Rendimiento", key: "rendimiento", width: 18 },
+      ];
+
+      const dayHeaderRow = ws.addRow(dayHeaders.map((c) => c.header));
+      dayHeaderRow.height = 18;
+      dayHeaderRow.font = { bold: true, size: 10, color: { argb: "FF4472C4" } };
+      dayHeaderRow.eachCell((cell) => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+      });
+
+      for (const dia of team.dias) {
+        const dRendColor = dia.rendimiento !== null
+          ? (dia.rendimiento >= 85 ? "FF107C10" : dia.rendimiento >= 60 ? "FFED7D31" : "FFFF0000")
+          : "FF6B6B6B";
+
+        const dayRow = ws.addRow([
+          formatShortDate(dia.date),
+          dia.tareas_totales,
+          dia.tareas_completadas,
+          dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : "N/A",
+        ]);
+        dayRow.eachCell((cell, colNumber) => {
+          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+          if (colNumber === 4) {
+            cell.font = { bold: true, color: { argb: dRendColor } };
+          }
+        });
+      }
+    }
+  }
+
+  // Global summary
+  const totalEquipos = monthlyData.teams.length;
+  const totalDias = monthlyData.teams.reduce((s, t) => s + t.dias_con_datos, 0);
+  const totalTareas = monthlyData.teams.reduce((s, t) => s + t.tareas_totales, 0);
+  const totalCompletadas = monthlyData.teams.reduce((s, t) => s + t.tareas_completadas, 0);
+  const promedios = monthlyData.teams
+    .filter((t) => t.rendimiento_promedio !== null)
+    .map((t) => t.rendimiento_promedio!);
+  const promedioGlobal = promedios.length > 0
+    ? promedios.reduce((a, b) => a + b, 0) / promedios.length
+    : 0;
+  const progresoGlobal = totalTareas > 0 ? Math.round((totalCompletadas / totalTareas) * 100) : 0;
+
+  const summaryRow = ws.addRow([]);
+  summaryRow.height = 22;
+  const summaryCell = summaryRow.getCell(1);
+  summaryCell.value = `TOTAL GENERAL: ${totalEquipos} equipos  |  ${totalDias} días  |  ${totalCompletadas}/${totalTareas} tareas  |  Rend. Prom: ${promedioGlobal.toFixed(1)}%  |  Progreso: ${progresoGlobal}%`;
+  summaryCell.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
+  summaryCell.alignment = { horizontal: "left", vertical: "middle" };
+  summaryRow.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4472C4" } };
+    cell.border = { top: { style: "medium" }, left: { style: "thin" }, bottom: { style: "medium" }, right: { style: "thin" } };
+  });
+  ws.mergeCells(summaryRow.number, 1, summaryRow.number, headers.length);
+
+  // Column widths
+  headers.forEach((col, i) => {
+    ws.getColumn(i + 1).width = col.width;
+  });
+
+  // Download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `Rendimiento_Mensual_${monthName}_${year}.xlsx`;
+  link.click();
+  window.URL.revokeObjectURL(url);
+}
+
 export const rendimientoService = {
   async getRendimiento(date: string, team_id?: string | null): Promise<RendimientoResponse> {
     const params = new URLSearchParams({ date });
@@ -374,4 +543,5 @@ export const rendimientoService = {
   },
 
   downloadExcel: downloadRendimientoExcel,
+  downloadExcelMensual: downloadRendimientoMensualExcel,
 };
