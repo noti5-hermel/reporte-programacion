@@ -432,15 +432,31 @@ async function downloadRendimientoMensualExcel(
 
   // Global summary
   const totalEquipos = monthlyData.teams.length;
-  const totalDias = monthlyData.teams.reduce((s, t) => s + t.dias_con_datos, 0);
-  const totalTareas = monthlyData.teams.reduce((s, t) => s + t.tareas_totales, 0);
-  const totalCompletadas = monthlyData.teams.reduce((s, t) => s + t.tareas_completadas, 0);
-  const promedios = monthlyData.teams
-    .filter((t) => t.rendimiento_promedio !== null)
-    .map((t) => t.rendimiento_promedio!);
-  const promedioGlobal = promedios.length > 0
-    ? promedios.reduce((a, b) => a + b, 0) / promedios.length
+
+  // Días reales del mes con datos: días únicos (no la suma de los días de cada equipo,
+  // que multiplicaba el conteo cuando varios equipos trabajaban el mismo día).
+  const diasUnicos = new Set(
+    monthlyData.teams.flatMap((t) => t.dias.map((d) => d.date))
+  );
+  const totalDias = diasUnicos.size;
+
+  const totalTareas = monthlyData.stats.tareas_totales != null
+    ? Number(monthlyData.stats.tareas_totales)
+    : monthlyData.teams.reduce((s, t) => s + t.tareas_totales, 0);
+  const totalCompletadas = monthlyData.stats.tareas_completadas != null
+    ? Number(monthlyData.stats.tareas_completadas)
+    : monthlyData.teams.reduce((s, t) => s + t.tareas_completadas, 0);
+
+  // Rendimiento promedio de TODOS los equipos en el mes: promedio de los rendimientos
+  // diarios de todos los equipos (no el promedio de los promedios por equipo, que
+  // daba distinto según cuántos días hubiera trabajado cada uno).
+  const rendimientosDiarios = monthlyData.teams.flatMap((t) =>
+    t.dias.filter((d) => d.rendimiento !== null).map((d) => d.rendimiento!)
+  );
+  const promedioGlobal = rendimientosDiarios.length > 0
+    ? rendimientosDiarios.reduce((a, b) => a + b, 0) / rendimientosDiarios.length
     : 0;
+
   const progresoGlobal = totalTareas > 0 ? Math.round((totalCompletadas / totalTareas) * 100) : 0;
 
   const summaryRow = ws.addRow([]);
