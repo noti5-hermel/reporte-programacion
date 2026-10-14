@@ -19,14 +19,12 @@ export default function General() {
     setLoading(true);
     setError("");
     try {
-      const result = await completedTasksService.getCompletedTasks(
-        1,
-        500,
+      const result = await completedTasksService.getAllCompletedTasks(
         startDate || undefined,
         endDate || undefined,
         searchQuery || undefined
       );
-      setData(result.data);
+      setData(result);
       setFetchKey(k => k + 1);
     } catch (err) {
       setError("Error fetching data");

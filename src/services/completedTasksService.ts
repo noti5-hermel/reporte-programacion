@@ -47,4 +47,22 @@ export const completedTasksService = {
 
     return response.json();
   },
+
+  async getAllCompletedTasks(
+    startDate?: string,
+    endDate?: string,
+    codigo?: string,
+    pageSize: number = 500
+  ): Promise<CompletedTaskItem[]> {
+    const firstPage = await this.getCompletedTasks(1, pageSize, startDate, endDate, codigo);
+    const all = [...firstPage.data];
+    const totalPages = firstPage.total_pages || 1;
+
+    for (let page = 2; page <= totalPages; page++) {
+      const nextPage = await this.getCompletedTasks(page, pageSize, startDate, endDate, codigo);
+      all.push(...nextPage.data);
+    }
+
+    return all;
+  },
 };
