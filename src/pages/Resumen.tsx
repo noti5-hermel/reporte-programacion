@@ -14,6 +14,7 @@ export default function Resumen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
+  const [showDiff25, setShowDiff25] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,7 +35,16 @@ export default function Resumen() {
               rendimiento_sistema: item.rendimiento_sistema,
             }))
           : [];
-        setData(transformed);
+        const filtered = transformed.filter((item) => {
+          const tipoOk = String(item.tipo ?? "").trim() !== "";
+          const rendimientoOk =
+            item.rendimiento_calculado !== null &&
+            item.rendimiento_calculado !== undefined &&
+            String(item.rendimiento_calculado).trim() !== "";
+          const cantidadOk = Number(item.sumCantidad) !== 0;
+          return tipoOk && rendimientoOk && cantidadOk;
+        });
+        setData(filtered);
       } catch (err) {
         setError("Error fetching data");
       } finally {
@@ -46,15 +56,29 @@ export default function Resumen() {
   }, [selectedYear, selectedMonth]);
 
   const filteredData = useMemo(() => {
-    if (!searchQuery) {
-      return data;
+    let result = data;
+
+    if (showDiff25) {
+      result = result.filter((item) => {
+        const calc = Number(item.rendimiento_calculado);
+        const sist = Number(item.rendimiento_sistema);
+        if (!Number.isFinite(calc) || !Number.isFinite(sist) || sist === 0) return false;
+        const diffPct = Math.abs((calc - sist) / sist) * 100;
+        return diffPct >= 25;
+      });
     }
-    return data.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [data, searchQuery]);
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((item) =>
+        Object.values(item).some((value) =>
+          String(value).toLowerCase().includes(q)
+        )
+      );
+    }
+
+    return result;
+  }, [data, searchQuery, showDiff25]);
 
   if (allowed === null) {
     return (
@@ -81,6 +105,7 @@ export default function Resumen() {
   const handleClearFilters = () => {
     setSelectedYear(null);
     setSelectedMonth(null);
+    setShowDiff25(false);
   };
 
   const handleExport = () => {
@@ -143,6 +168,15 @@ export default function Resumen() {
             ))}
           </select>
         </div>
+        <label className="flex items-center gap-2 px-3 py-2.5 bg-background-primary border border-border-card rounded-xl text-sm font-bold text-title cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showDiff25}
+            onChange={(e) => setShowDiff25(e.target.checked)}
+            className="h-4 w-4 rounded border-border-card text-button-primary focus:ring-button-primary/20"
+          />
+          Diferencia ≥ 25% (calc. vs sistema)
+        </label>
         <button
           onClick={handleClearFilters}
           className="flex items-center gap-2 px-4 py-2.5 bg-background-primary border border-border-card text-title font-bold rounded-xl hover:bg-background-secondary transition-all text-sm shadow-sm"
