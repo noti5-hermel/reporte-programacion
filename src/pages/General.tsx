@@ -24,7 +24,17 @@ export default function General() {
         endDate || undefined,
         searchQuery || undefined
       );
-      setData(result);
+      const filtered = result.filter((item) => {
+        const tipoOk = String(item.tipo ?? "").trim() !== "";
+        const actividadOk = String(item.actividad ?? "").trim() !== "";
+        const rendimientoOk =
+          item.rendimiento_calculado !== null &&
+          item.rendimiento_calculado !== undefined &&
+          String(item.rendimiento_calculado).trim() !== "";
+        const cantidadOk = Number(item.cantidad) !== 0;
+        return tipoOk && actividadOk && rendimientoOk && cantidadOk;
+      });
+      setData(filtered);
       setFetchKey(k => k + 1);
     } catch (err) {
       setError("Error fetching data");

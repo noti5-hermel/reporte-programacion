@@ -76,9 +76,9 @@ function formatShortDate(dateString: string) {
 }
 
 function formatTimeHHMM(dateString: string | null) {
-  if (!dateString) return "-";
+  if (!dateString) return "";
   const d = new Date(dateString);
-  if (isNaN(d.getTime())) return "-";
+  if (isNaN(d.getTime())) return "";
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
@@ -151,9 +151,9 @@ function rowDataFromItem(item: RendimientoDetailItem): (string | number)[] {
       return Math.round(Number(val)).toString();
     }
     if ((col.key === "cantidad_planificada" || col.key === "cantidad_real") && (val === null || val === undefined)) {
-      return "-";
+      return "";
     }
-    if (val === null || val === undefined) return "-";
+    if (val === null || val === undefined) return "";
     return val;
   });
 }
@@ -225,7 +225,7 @@ async function downloadRendimientoExcel(
 
     // ── Fila de encabezado de equipo ──
     const progress = group.total > 0 ? Math.round(group.completadas / group.total * 100) : 0;
-    const headerText = `${group.equipo} — ${group.completadas}/${group.total} tareas  |  Rend. Prom: ${promedio !== null ? promedio.toFixed(1) + "%" : "N/A"}  |  Progreso: ${progress}%`;
+    const headerText = `${group.equipo} — ${group.completadas}/${group.total} tareas  |  Rend. Prom: ${promedio !== null ? promedio.toFixed(1) + "%" : ""}  |  Progreso: ${progress}%`;
     const teamHeaderRow = ws.addRow([headerText]);
     teamHeaderRow.height = 24;
     ws.mergeCells(teamHeaderRow.number, 1, teamHeaderRow.number, headers.length);
@@ -252,7 +252,7 @@ async function downloadRendimientoExcel(
     for (let c = 0; c < COLUMNS.length; c++) {
       if (c === 9) teamSummaryData.push(Math.round(sumaPlan).toString());
       else if (c === 12) teamSummaryData.push(Math.round(sumaReal).toString());
-      else if (c === 13) teamSummaryData.push(promedio !== null ? `${promedio.toFixed(2)}%` : "N/A");
+      else if (c === 13) teamSummaryData.push(promedio !== null ? `${promedio.toFixed(2)}%` : "");
       else teamSummaryData.push(c === 0 ? `Subtotal ${group.equipo}` : "");
     }
     const teamSummaryRow = ws.addRow(teamSummaryData);
@@ -374,7 +374,7 @@ async function downloadRendimientoMensualExcel(
       team.dias_con_datos,
       team.tareas_totales,
       team.tareas_completadas,
-      team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : "N/A",
+      team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : "",
       `${team.progreso}%`,
     ];
 
@@ -417,7 +417,7 @@ async function downloadRendimientoMensualExcel(
           formatShortDate(dia.date),
           dia.tareas_totales,
           dia.tareas_completadas,
-          dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : "N/A",
+          dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : "",
         ]);
         dayRow.eachCell((cell, colNumber) => {
           cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };

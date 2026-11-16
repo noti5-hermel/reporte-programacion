@@ -25,7 +25,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
         <td className={`${cellClass} text-right`}>{row.cantidad}</td>
         <td className={`${cellClass} text-right font-mono`}>{row.duracion}</td>
         <td className={`${cellClass} text-right font-mono`}>{row.horas}</td>
-        <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_calculado != null ? row.rendimiento_calculado.toFixed(4) : "-"}</td>
+        <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_calculado != null ? row.rendimiento_calculado.toFixed(4) : ""}</td>
       </tr>
     );
   }
@@ -42,8 +42,8 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
         <td className={`${cellClass} text-right`}>{row.promTiempoProducto}</td>
         <td className={`${cellClass} text-right`}>{row.numeroPersonas}</td>
         <td className={`${cellClass} text-right`}>{row.totalTiempoReal}</td>
-        <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_calculado != null ? row.rendimiento_calculado.toFixed(4) : "-"}</td>
-        <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_sistema != null ? row.rendimiento_sistema : "-"}</td>
+        <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_calculado != null ? row.rendimiento_calculado.toFixed(4) : ""}</td>
+        <td className={`${cellClass} text-right font-mono`}>{row.rendimiento_sistema != null ? row.rendimiento_sistema : ""}</td>
       </tr>
     );
   }
@@ -56,9 +56,9 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
 
     return (
       <tr className={baseRowClass}>
-        <td className={`${cellClass} font-bold`}>{row.operator_name || row.username || "-"}</td>
-        <td className={cellClass}>{row.job_title || "-"}</td>
-        <td className={cellClass}>{row.teams || "-"}</td>
+        <td className={`${cellClass} font-bold`}>{row.operator_name || row.username || ""}</td>
+        <td className={cellClass}>{row.job_title || ""}</td>
+        <td className={cellClass}>{row.teams || ""}</td>
         <td className={`${cellClass} text-right`}>{row.active_days || 0}</td>
         <td className={`${cellClass} text-right`}>{row.completed_tasks || 0}</td>
         <td className={`${cellClass} text-right`}>{row.total_real_quantity || 0}</td>
@@ -67,7 +67,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
           {completionRate.toFixed(1)}%
         </td>
         <td className={`${cellClass} text-right font-mono`}>
-          {productivity != null ? productivity.toFixed(2) : "-"}
+          {productivity != null ? productivity.toFixed(2) : ""}
         </td>
       </tr>
     );
@@ -79,7 +79,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
     ? (rend >= 85 ? 'text-green-600 font-bold' : rend >= 60 ? 'text-yellow-600 font-bold' : 'text-red-600 font-bold')
     : 'text-subtitle';
   const formatTime = (val: string | null) => {
-    if (!val) return "-";
+    if (!val) return "";
     if (val.includes("T")) return val.slice(11, 19);
     if (val.length >= 8) return val.slice(0, 8);
     return val;
@@ -87,24 +87,24 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
 
   return (
     <tr className={baseRowClass}>
-      <td className={`${cellClass} font-bold`}>{row.equipo || "-"}</td>
-      <td className={cellClass}>{row.codigo || "-"}</td>
-      <td className={cellClass}>{row.description || "-"}</td>
-      <td className={cellClass}>{row.material || "-"}</td>
-      <td className={cellClass}>{row.lote || "-"}</td>
-      <td className={`${cellClass} text-right`}>{row.cantidad_planificada ?? "-"}</td>
-      <td className={`${cellClass} text-right`}>{row.cantidad_real ?? "-"}</td>
+      <td className={`${cellClass} font-bold`}>{row.equipo || ""}</td>
+      <td className={cellClass}>{row.codigo || ""}</td>
+      <td className={cellClass}>{row.description || ""}</td>
+      <td className={cellClass}>{row.material || ""}</td>
+      <td className={cellClass}>{row.lote || ""}</td>
+      <td className={`${cellClass} text-right`}>{row.cantidad_planificada ?? ""}</td>
+      <td className={`${cellClass} text-right`}>{row.cantidad_real ?? ""}</td>
       <td className={`${cellClass} text-center text-xs`}>{formatTime(row.inicio_planificado)}</td>
       <td className={`${cellClass} text-center text-xs`}>{formatTime(row.final_planificado)}</td>
-      <td className={`${cellClass} text-right font-mono`}>{row.tiempo_planificado ?? "-"}</td>
+      <td className={`${cellClass} text-right font-mono`}>{row.tiempo_planificado ?? ""}</td>
       <td className={`${cellClass} text-center text-xs`}>{formatTime(row.inicio_real)}</td>
       <td className={`${cellClass} text-center text-xs`}>{formatTime(row.final_real)}</td>
-      <td className={`${cellClass} text-right font-mono`}>{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : "-"}</td>
+      <td className={`${cellClass} text-right font-mono`}>{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : ""}</td>
       <td className={`${cellClass} text-right ${rendColor}`}>
-        {rend != null ? `${rend.toFixed(2)}%` : "N/A"}
+        {rend != null ? `${rend.toFixed(2)}%` : ""}
       </td>
       <td className={`${cellClass} text-xs max-w-[150px] truncate`} title={row.comentarios || ""}>
-        {row.comentarios || "-"}
+        {row.comentarios || ""}
       </td>
     </tr>
   );

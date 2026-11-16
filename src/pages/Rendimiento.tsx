@@ -337,7 +337,7 @@ export default function Rendimiento() {
                         <div className="text-center">
                           <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Rendimiento Prom.</p>
                           <p className={`font-black text-base ${rendColor}`}>
-                            {team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : "N/A"}
+                            {team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : ""}
                           </p>
                         </div>
                         <div className="text-center">
@@ -371,7 +371,7 @@ export default function Rendimiento() {
                                   <td className="px-3 py-2.5 border-b border-border-card text-right">{dia.tareas_totales}</td>
                                   <td className="px-3 py-2.5 border-b border-border-card text-right">{dia.tareas_completadas}</td>
                                   <td className={`px-3 py-2.5 border-b border-border-card text-right ${dRendColor}`}>
-                                    {dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : "N/A"}
+                                    {dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : ""}
                                   </td>
                                 </tr>
                               );
@@ -412,7 +412,7 @@ export default function Rendimiento() {
                       <div className="text-center">
                         <p className="text-subtitle text-xs font-bold uppercase tracking-wider">Rendimiento Prom.</p>
                         <p className={`font-black text-base ${rendColor}`}>
-                          {group.promedio !== null ? `${group.promedio.toFixed(1)}%` : "N/A"}
+                          {group.promedio !== null ? `${group.promedio.toFixed(1)}%` : ""}
                         </p>
                       </div>
                       <div className="text-center">
@@ -444,7 +444,7 @@ export default function Rendimiento() {
                       <tbody>
                         {group.tasks.map((row: any, i: number) => {
                           const formatTime = (val: string | null) => {
-                            if (!val) return "-";
+                            if (!val) return "";
                             if (val.includes("T")) return val.slice(11, 19);
                             if (val.length >= 8) return val.slice(0, 8);
                             return val;
@@ -455,23 +455,23 @@ export default function Rendimiento() {
                             : 'text-subtitle';
                           return (
                             <tr key={i} className="hover:bg-background-primary text-sm transition-colors even:bg-background-primary/50">
-                              <td className="px-3 py-2.5 border-b border-border-card">{row.codigo || "-"}</td>
-                              <td className="px-3 py-2.5 border-b border-border-card">{row.description || "-"}</td>
-                              <td className="px-3 py-2.5 border-b border-border-card">{row.material || "-"}</td>
-                              <td className="px-3 py-2.5 border-b border-border-card font-mono">{row.lote || "-"}</td>
-                              <td className="px-3 py-2.5 border-b border-border-card text-right">{row.cantidad_planificada ?? "-"}</td>
-                              <td className="px-3 py-2.5 border-b border-border-card text-right">{row.cantidad_real ?? "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card">{row.codigo || ""}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card">{row.description || ""}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card">{row.material || ""}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card font-mono">{row.lote || ""}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right">{row.cantidad_planificada ?? ""}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right">{row.cantidad_real ?? ""}</td>
                               <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.inicio_planificado)}</td>
                               <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.final_planificado)}</td>
-                              <td className="px-3 py-2.5 border-b border-border-card text-right font-mono">{row.tiempo_planificado ?? "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right font-mono">{row.tiempo_planificado ?? ""}</td>
                               <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.inicio_real)}</td>
                               <td className="px-3 py-2.5 border-b border-border-card text-center text-xs">{formatTime(row.final_real)}</td>
-                              <td className="px-3 py-2.5 border-b border-border-card text-right font-mono">{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : "-"}</td>
+                              <td className="px-3 py-2.5 border-b border-border-card text-right font-mono">{row.tiempo_real != null ? row.tiempo_real.toFixed(2) : ""}</td>
                               <td className={`px-3 py-2.5 border-b border-border-card text-right ${rendColor}`}>
-                                {rend != null ? `${rend.toFixed(2)}%` : "N/A"}
+                                {rend != null ? `${rend.toFixed(2)}%` : ""}
                               </td>
                               <td className="px-3 py-2.5 border-b border-border-card text-xs max-w-[150px] truncate" title={row.comentarios || ""}>
-                                {row.comentarios || "-"}
+                                {row.comentarios || ""}
                               </td>
                             </tr>
                           );
