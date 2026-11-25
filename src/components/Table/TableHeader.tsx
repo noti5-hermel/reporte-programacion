@@ -2,13 +2,15 @@
 import React from "react";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { ColumnHelp } from "./ColumnHelp";
+import type { SortDirection } from "../../hooks/useTableSort";
 
 interface TableHeaderProps {
   columns: string[];
   descriptions?: Record<string, string>;
   sortColumn?: string;
-  sortDirection?: "asc" | "desc";
+  sortDirection?: SortDirection;
   onSort?: (column: string) => void;
+  columnKeys?: Record<string, string>;
 }
 
 const TableHeader: React.FC<TableHeaderProps> = ({
@@ -17,14 +19,15 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   sortColumn,
   sortDirection,
   onSort,
+  columnKeys,
 }) => {
   return (
     <thead className="bg-background-primary text-subtitle">
       <tr>
         {columns.map((col) => {
-          const normalized = col.toLowerCase().replace(/\s+/g, "");
-          const isSorted = sortColumn === normalized;
-          const isNumeric = ["rendimientocalculado"].includes(normalized);
+          const key = columnKeys?.[col] ?? col.toLowerCase().replace(/\s+/g, "");
+          const isSorted = sortColumn === key;
+          const isNumeric = key === "rendimiento_calculado";
           const alignClass = isNumeric ? "text-right justify-end" : "text-left";
 
           return (

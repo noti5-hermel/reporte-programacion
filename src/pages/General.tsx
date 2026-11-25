@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { completedTasksService } from "../services/completedTasksService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
+import { useTableSort } from "../hooks/useTableSort";
 import { ShieldOff } from "lucide-react";
 
 export default function General() {
@@ -13,9 +14,11 @@ export default function General() {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
-  const [fetchKey, setFetchKey] = useState(0);
+  const { sortColumn, sortDirection, handleSortChange } = useTableSort();
+  const requestIdRef = useRef(0);
 
   const fetchData = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
     try {
@@ -24,6 +27,8 @@ export default function General() {
         endDate || undefined,
         searchQuery || undefined
       );
+      // Ignorar respuestas de cargas anteriores (evita "reordenes" tardíos).
+      if (requestId !== requestIdRef.current) return;
       const filtered = result.filter((item) => {
         const tipoOk = String(item.tipo ?? "").trim() !== "";
         const actividadOk = String(item.actividad ?? "").trim() !== "";
@@ -35,11 +40,11 @@ export default function General() {
         return tipoOk && actividadOk && rendimientoOk && cantidadOk;
       });
       setData(filtered);
-      setFetchKey(k => k + 1);
-    } catch (err) {
+    } catch {
+      if (requestId !== requestIdRef.current) return;
       setError("Error fetching data");
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [startDate, endDate, searchQuery]);
 
@@ -81,7 +86,11 @@ export default function General() {
     <div className="flex flex-col gap-6">
       <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <h1 className="text-2xl font-black tracking-tight text-title">Listado General</h1>
-        <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <SearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Buscar por código o lote..."
+        />
       </div>
 
       <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex flex-wrap items-end gap-4">
@@ -115,7 +124,13 @@ export default function General() {
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">{error}</div>
       ) : (
         <>
-          <DataTable key={fetchKey} type="general" data={data} />
+          <DataTable
+            type="general"
+            data={data}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+          />
         </>
       )}
     </div>

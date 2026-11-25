@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { COLUMN_DESCRIPTIONS } from "./ColumnHelp";
+import type { SortDirection } from "../../hooks/useTableSort";
 
 interface DataItem {
   [key: string]: any;
@@ -12,13 +13,106 @@ interface DataTableProps {
   type: "general" | "resumen" | "rendimiento" | "operators";
   data?: DataItem[];
   loading?: boolean;
+  // Si el padre los pasa, el orden queda bajo su control y no se pierde al remontar.
+  sortColumn?: string;
+  sortDirection?: SortDirection;
+  onSortChange?: (column: string, direction: SortDirection) => void;
 }
 
-const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
-  const [sortColumn, setSortColumn] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+const COLUMN_KEYS: Record<DataTableProps["type"], Record<string, string>> = {
+  general: {
+    Fecha: "fecha",
+    Código: "codigo",
+    Descripción: "descripcion",
+    Tipo: "tipo",
+    Lote: "lote",
+    Actividad: "actividad",
+    Producción: "produccion",
+    Personas: "personas",
+    "Cantidad Producida": "cantidad",
+    Duración: "duracion",
+    Horas: "horas",
+    "Rendimiento Calculado": "rendimiento_calculado",
+  },
+  resumen: {
+    Código: "codigo",
+    Descripción: "descripcion",
+    Tipo: "tipo",
+    "Suma Total Horas": "sumaTotalHoras",
+    "Cantidad producida": "sumCantidad",
+    "Prom. Tiempo Producto": "promTiempoProducto",
+    "N° Personas": "numeroPersonas",
+    "Total Tiempo Real": "totalTiempoReal",
+    "Rendimiento Calculado": "rendimiento_calculado",
+    "Rendimiento Sistema": "rendimiento_sistema",
+  },
+  rendimiento: {
+    Equipo: "equipo",
+    Código: "codigo",
+    Descripción: "description",
+    Material: "material",
+    Lote: "lote",
+    "Cant. Plan.": "cantidad_planificada",
+    "Cant. Real": "cantidad_real",
+    "Inicio Planif.": "inicio_planificado",
+    "Final Planif.": "final_planificado",
+    "T. Planif.": "tiempo_planificado",
+    "Inicio Real": "inicio_real",
+    "Final Real": "final_real",
+    "T. Real": "tiempo_real",
+    Rendimiento: "rendimiento",
+    Comentarios: "comentarios",
+  },
+  operators: {
+    Operario: "operator_name",
+    Cargo: "job_title",
+    Equipos: "teams",
+    "Días Activos": "active_days",
+    "Tareas Comp.": "completed_tasks",
+    "Cant. Real": "total_real_quantity",
+    "T. Real (min)": "total_real_minutes",
+    Eficiencia: "completion_rate",
+    "Prod. Real (und/h)": "real_productivity",
+  },
+};
+
+const DATE_KEYS = new Set([
+  "fecha",
+  "inicio_planificado",
+  "final_planificado",
+  "inicio_real",
+  "final_real",
+]);
+
+function compareValues(valA: unknown, valB: unknown, key: string) {
+  if (DATE_KEYS.has(key)) {
+    const timeA = Date.parse(String(valA ?? ""));
+    const timeB = Date.parse(String(valB ?? ""));
+    return (Number.isNaN(timeA) ? -Infinity : timeA) - (Number.isNaN(timeB) ? -Infinity : timeB);
+  }
+  if (typeof valA === "number" && typeof valB === "number") {
+    return valA - valB;
+  }
+  return String(valA ?? "").localeCompare(String(valB ?? ""));
+}
+
+const DataTable: React.FC<DataTableProps> = ({
+  type,
+  data = [],
+  loading,
+  sortColumn: controlledSortColumn,
+  sortDirection: controlledSortDirection,
+  onSortChange,
+}) => {
+  const [internalSortColumn, setInternalSortColumn] = useState<string>("");
+  const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
+
+  const isControlled = typeof onSortChange === "function";
+  const activeSortColumn = isControlled ? (controlledSortColumn ?? "") : internalSortColumn;
+  const activeSortDirection = isControlled ? (controlledSortDirection ?? "asc") : internalSortDirection;
+  const columnKeys = COLUMN_KEYS[type];
 
   // 🔹 Definir columnas basadas en el tipo de tabla
   const columns = useMemo(() => {
@@ -57,29 +151,28 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
 
   // 🔹 Función para manejar el ordenamiento
   const handleSort = (column: string) => {
-    const normalizedColumn = column.toLowerCase().replace(/\s+/g, "");
-    if (sortColumn === normalizedColumn) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    const key = columnKeys[column] ?? column.toLowerCase().replace(/\s+/g, "");
+    const nextDirection: SortDirection =
+      activeSortColumn === key && activeSortDirection === "asc" ? "desc" : "asc";
+
+    if (isControlled) {
+      onSortChange!(key, nextDirection);
     } else {
-      setSortColumn(normalizedColumn);
-      setSortDirection("asc");
+      setInternalSortColumn(key);
+      setInternalSortDirection(nextDirection);
     }
+    // Siempre mostrar la primera fila del nuevo orden (ej. la fecha más antigua).
+    setCurrentPage(1);
   };
 
   // 🔹 Ordenar los datos
   const sortedData = useMemo(() => {
-    if (!sortColumn) return data;
+    if (!activeSortColumn) return data;
     return [...data].sort((a, b) => {
-      const valA = a[sortColumn] ?? "";
-      const valB = b[sortColumn] ?? "";
-      if (typeof valA === "number" && typeof valB === "number") {
-        return sortDirection === "asc" ? valA - valB : valB - valA;
-      }
-      return sortDirection === "asc"
-        ? String(valA).localeCompare(String(valB))
-        : String(valB).localeCompare(String(valA));
+      const result = compareValues(a[activeSortColumn], b[activeSortColumn], activeSortColumn);
+      return activeSortDirection === "asc" ? result : -result;
     });
-  }, [data, sortColumn, sortDirection]);
+  }, [data, activeSortColumn, activeSortDirection]);
 
   // 🔹 Paginación
   const totalPages = Math.ceil(sortedData.length / rowsPerPage);
@@ -107,9 +200,10 @@ const DataTable: React.FC<DataTableProps> = ({ type, data = [], loading }) => {
           <TableHeader
             columns={columns}
             descriptions={COLUMN_DESCRIPTIONS[type]}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
+            sortColumn={activeSortColumn}
+            sortDirection={activeSortDirection}
             onSort={handleSort}
+            columnKeys={columnKeys}
           />
           <tbody>
             {paginatedData.map((row, index) => (

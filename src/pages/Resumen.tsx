@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { productivityService } from "../services/productivityService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
+import { useTableSort } from "../hooks/useTableSort";
 import { ShieldOff } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -15,11 +16,15 @@ export default function Resumen() {
   const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
   const [showDiff25, setShowDiff25] = useState(false);
+  const { sortColumn, sortDirection, handleSortChange } = useTableSort();
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
+    const requestId = ++requestIdRef.current;
     const fetchData = async () => {
       try {
         const result = await productivityService.getTaskPerformanceGroup(selectedYear, selectedMonth);
+        if (requestId !== requestIdRef.current) return;
         // Transform the API data to match the expected format
         const transformed = Array.isArray(result)
           ? result.map((item: any) => ({
@@ -45,10 +50,11 @@ export default function Resumen() {
           return tipoOk && rendimientoOk && cantidadOk;
         });
         setData(filtered);
-      } catch (err) {
+      } catch {
+        if (requestId !== requestIdRef.current) return;
         setError("Error fetching data");
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current) setLoading(false);
       }
     };
 
@@ -192,7 +198,13 @@ export default function Resumen() {
       ) : error ? (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">{error}</div>
       ) : (
-        <DataTable type="resumen" data={filteredData} />
+        <DataTable
+          type="resumen"
+          data={filteredData}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
+        />
       )}
     </div>
   );
