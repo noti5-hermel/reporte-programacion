@@ -62,8 +62,9 @@ export default function Rendimiento() {
   };
 
   useEffect(() => {
+    if (allowed === null || !allowed.has("rendimiento")) return;
     fetchData(selectedDate);
-  }, [selectedDate, selectedMonth, selectedYear, viewMode]);
+  }, [selectedDate, selectedMonth, selectedYear, viewMode, allowed]);
 
   const uniqueTeams = useMemo(() => {
     const teams = new Set(detailData.map((item) => item.equipo));

@@ -20,6 +20,7 @@ export default function Resumen() {
   const requestIdRef = useRef(0);
 
   useEffect(() => {
+    if (allowed === null || !allowed.has("resumen")) return;
     const requestId = ++requestIdRef.current;
     const fetchData = async () => {
       try {
@@ -59,7 +60,7 @@ export default function Resumen() {
     };
 
     fetchData();
-  }, [selectedYear, selectedMonth]);
+  }, [selectedYear, selectedMonth, allowed]);
 
   const filteredData = useMemo(() => {
     let result = data;

@@ -18,6 +18,9 @@ La aplicación estará disponible en `http://localhost:3000`
 #### Opción 1: Docker Compose (Recomendado)
 
 ```bash
+# La primera vez, crear la red compartida con la API de reportes
+docker network create reporteria-network
+
 # Construir y levantar el contenedor
 docker-compose up -d
 
@@ -49,34 +52,23 @@ docker run -d -p 85:80 --name reporteria-frontend reporteria-frontend
 
 ## ⚙️ Configuración del API
 
-Para configurar la URL base del API, crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+Copia `.env.example` a `.env`. Todas las variables son opcionales: si se dejan
+vacías, la app usa rutas relativas y nginx (en Docker) hace de proxy inverso:
 
-```
-VITE_API_BASE_URL=http://localhost:8000
-```
+| Variable | Uso | Valor por defecto |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | Base de la API de autenticación | `""` (mismo origen) |
+| `VITE_REPORTS_API_URL` | API de reportes | `VITE_API_BASE_URL` |
+| `VITE_AUTH_API_URL` | Servicio de autenticación | `/auth-api` |
+| `VITE_AUTH_HEALTH_URL` | Health check del servicio externo | `/auth-api/api/auth/health` |
+| `VITE_AUTH_FRONTEND_URL` | Redirección al login externo | origen actual |
 
-Si no especificas esta variable, por defecto se usará `http://localhost:8000`.
+En desarrollo sin proxy, configura URLs absolutas (ver los ejemplos en
+`.env.example`). Después de modificar `.env`, reinicia el servidor de desarrollo.
 
-### Ejemplos de configuración:
-
-**Desarrollo local:**
-```
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-**Servidor de desarrollo:**
-```
-VITE_API_BASE_URL=http://192.168.1.100:8000
-```
-
-**Producción:**
-```
-VITE_API_BASE_URL=https://api.tudominio.com
-```
-
-**Importante:** 
-- Después de modificar el archivo `.env`, debes reiniciar el servidor de desarrollo para que los cambios surtan efecto
-- Para Docker, las variables de entorno deben configurarse antes de construir la imagen (`docker build`)
+**Importante:** las variables `VITE_*` se incrustan en el bundle durante
+`npm run build`. Para Docker se pasan como build args; el `.env` local **no** se
+copia a la imagen (está excluido en `.dockerignore`).
 
 ## 🐳 Información sobre Docker
 
@@ -84,7 +76,7 @@ VITE_API_BASE_URL=https://api.tudominio.com
 
 - **Dockerfile**: Construcción multi-etapa optimizada (Node 20 + Nginx)
 - **docker-compose.yml**: Configuración del servicio con redes y health checks
-- **nginx.conf**: Configuración de Nginx para SPA con optimizaciones
+- **nginx.conf**: Plantilla de Nginx (SPA + proxy `/api/` y `/auth-api/`)
 - **.dockerignore**: Excluye archivos innecesarios del contexto Docker
 
 ### Características
@@ -99,18 +91,20 @@ VITE_API_BASE_URL=https://api.tudominio.com
 
 ### Variables de entorno en Docker
 
-Para usar una URL de API diferente en el contenedor Docker:
+- Las `VITE_*` se leen en tiempo de **build** como build args de
+  `docker-compose.yml` (se toman del entorno o del `.env` del host).
+- Los upstreams de nginx se leen en tiempo de **ejecución**:
+  `REPORTS_API_UPSTREAM` (por defecto `http://reports-api:8107`) y
+  `AUTH_API_UPSTREAM` (por defecto `http://auth-api:8081`).
 
-1. Edita el archivo `.env` con tu URL:
-   ```
-   VITE_API_BASE_URL=https://api.tudominio.com
-   ```
+```bash
+# Ejemplo: apuntar a una API externa sin reconstruir la imagen
+REPORTS_API_UPSTREAM=http://192.168.1.155:8107 docker-compose up -d
 
-2. Reconstruye la imagen:
-   ```bash
-   docker-compose build
-   docker-compose up -d
-   ```
+# Cambiar las VITE_* sí requiere reconstruir
+VITE_AUTH_FRONTEND_URL=https://auth.tudominio.com docker-compose build
+docker-compose up -d
+```
 
 ## 🔧 Información Técnica
 

@@ -1,12 +1,13 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { useAuth } from "../hooks/useAuth";
+import { AUTH_FRONTEND_URL } from "../config/api";
 import { Shield } from "lucide-react";
 
 export default function MainLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const authUrl = import.meta.env.VITE_AUTH_FRONTEND_URL || "http://localhost:5173/";
+  const authUrl = AUTH_FRONTEND_URL;
   const targetUrl = new URL('/menu', authUrl).toString();
 
   const handleGoToMenu = () => {

@@ -1,23 +1,28 @@
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://192.168.1.155:8001";
-const rawReportsApiUrl = import.meta.env.VITE_REPORTS_API_URL || rawApiBaseUrl;
-
 const normalizeUrl = (url: string) => {
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return url;
   return `http://${url}`;
 };
 
-export const API_BASE_URL = normalizeUrl(rawApiBaseUrl);
-export const REPORTS_API_URL = normalizeUrl(rawReportsApiUrl);
-
-const AUTH_HEALTH_URL = import.meta.env.VITE_AUTH_HEALTH_URL || "http://192.168.1.155:8081/api/auth/health";
-const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL || "http://192.168.1.155:5173";
+// En producción se usan rutas relativas: nginx proxyiza /api/ hacia la API de
+// reportes y /auth-api/ hacia el servicio de autenticación. Los valores VITE_*
+// permiten apuntar a otros hosts en desarrollo o en despliegues sin proxy.
+export const API_BASE_URL = normalizeUrl(import.meta.env.VITE_API_BASE_URL || "");
+export const REPORTS_API_URL = normalizeUrl(import.meta.env.VITE_REPORTS_API_URL || API_BASE_URL);
+export const AUTH_API_URL = normalizeUrl(import.meta.env.VITE_AUTH_API_URL || "/auth-api");
+export const AUTH_HEALTH_URL = normalizeUrl(
+  import.meta.env.VITE_AUTH_HEALTH_URL || "/auth-api/api/auth/health"
+);
+export const AUTH_FRONTEND_URL = normalizeUrl(
+  import.meta.env.VITE_AUTH_FRONTEND_URL || window.location.origin
+);
 
 async function handleUnauthorized() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("last_activity");
+  localStorage.removeItem("user_reports");
 
   try {
     const controller = new AbortController();

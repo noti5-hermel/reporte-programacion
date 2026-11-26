@@ -8,10 +8,10 @@ dist
 dist-ssr
 build
 
-# Environment files
-.env.local
-.env.production.local
-.env.development.local
+# Environment files (VITE_* se incrustan en el bundle; se pasan como build args)
+.env
+.env.*
+!.env.example
 
 # Git
 .git
@@ -39,7 +39,3 @@ TODO.md
 docker-compose.yml
 Dockerfile
 .dockerignore
-
-
-
-

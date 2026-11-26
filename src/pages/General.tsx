@@ -48,8 +48,10 @@ export default function General() {
   }, [page, rowsPerPage, startDate, endDate, searchQuery, sortColumn, sortDirection]);
 
   useEffect(() => {
+    // No pedir datos al servidor hasta saber que el usuario tiene permiso.
+    if (allowed === null || !allowed.has("general")) return;
     fetchData();
-  }, [fetchData]);
+  }, [allowed, fetchData]);
 
   if (allowed === null) {
     return (

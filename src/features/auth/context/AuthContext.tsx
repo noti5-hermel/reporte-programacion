@@ -6,7 +6,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { API_BASE_URL, REPORTS_API_URL } from "../../../config/api";
+import { AUTH_API_URL, AUTH_FRONTEND_URL, AUTH_HEALTH_URL, REPORTS_API_URL } from "../../../config/api";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -131,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const checkAuthHealth = async () => {
-      const healthUrl = import.meta.env.VITE_AUTH_HEALTH_URL;
+      const healthUrl = AUTH_HEALTH_URL;
       try {
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (authServiceAvailable === true) {
       const params = new URLSearchParams(window.location.search);
       if (!params.get('token')) {
-        const envUrl = import.meta.env.VITE_AUTH_FRONTEND_URL || "http://192.168.1.155:5173/login";
+        const envUrl = `${AUTH_FRONTEND_URL.replace(/\/$/, "")}/login`;
         let authUrl = envUrl;
         try {
           const url = new URL(envUrl);
@@ -201,7 +201,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (username: string, password: string) => {
     const loginUrl = authServiceAvailable === false
       ? `${REPORTS_API_URL}/api/v1/auth/login`
-      : `${import.meta.env.VITE_AUTH_API_URL || API_BASE_URL}/api/v1/auth/login`;
+      : `${AUTH_API_URL}/api/v1/auth/login`;
 
     const response = await fetch(loginUrl, {
       method: "POST",
@@ -231,9 +231,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("last_activity");
+    localStorage.removeItem("user_reports");
     setToken(null);
     setUser(null);
-    const envUrl = import.meta.env.VITE_AUTH_FRONTEND_URL || "http://192.168.1.155:5173";
+    const envUrl = AUTH_FRONTEND_URL;
     let authUrl = envUrl;
     try {
       const url = new URL(envUrl);
