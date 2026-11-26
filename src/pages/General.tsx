@@ -105,7 +105,7 @@ export default function General() {
         <SearchBar
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
-          placeholder="Buscar por código o lote..."
+          placeholder="Buscar código y lote (ej. T001 L-200)"
         />
       </div>
 
