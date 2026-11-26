@@ -3,17 +3,20 @@ import { DataTable } from "../components/Table";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { completedTasksService } from "../services/completedTasksService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
-import { useTableSort } from "../hooks/useTableSort";
+import { useTableSort, type SortDirection } from "../hooks/useTableSort";
 import { ShieldOff } from "lucide-react";
 
 export default function General() {
   const allowed = useReportPermissions();
   const [data, setData] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const { sortColumn, sortDirection, handleSortChange } = useTableSort();
   const requestIdRef = useRef(0);
 
@@ -22,31 +25,27 @@ export default function General() {
     setLoading(true);
     setError("");
     try {
-      const result = await completedTasksService.getAllCompletedTasks(
+      // El servidor aplica filtros, orden y paginación; solo llega la página visible.
+      const result = await completedTasksService.getCompletedTasks(
+        page,
+        rowsPerPage,
         startDate || undefined,
         endDate || undefined,
-        searchQuery || undefined
+        searchQuery || undefined,
+        sortColumn || undefined,
+        sortColumn ? sortDirection : undefined
       );
       // Ignorar respuestas de cargas anteriores (evita "reordenes" tardíos).
       if (requestId !== requestIdRef.current) return;
-      const filtered = result.filter((item) => {
-        const tipoOk = String(item.tipo ?? "").trim() !== "";
-        const actividadOk = String(item.actividad ?? "").trim() !== "";
-        const rendimientoOk =
-          item.rendimiento_calculado !== null &&
-          item.rendimiento_calculado !== undefined &&
-          String(item.rendimiento_calculado).trim() !== "";
-        const cantidadOk = Number(item.cantidad) !== 0;
-        return tipoOk && actividadOk && rendimientoOk && cantidadOk;
-      });
-      setData(filtered);
+      setData(result.data);
+      setTotal(result.total);
     } catch {
       if (requestId !== requestIdRef.current) return;
       setError("Error fetching data");
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
     }
-  }, [startDate, endDate, searchQuery]);
+  }, [page, rowsPerPage, startDate, endDate, searchQuery, sortColumn, sortDirection]);
 
   useEffect(() => {
     fetchData();
@@ -74,12 +73,29 @@ export default function General() {
     );
   }
 
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
+
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStartDate(e.target.value);
+    setPage(1);
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEndDate(e.target.value);
+    setPage(1);
+  };
+
+  const handleSort = (column: string, direction: SortDirection) => {
+    handleSortChange(column, direction);
+    setPage(1);
+  };
+
+  const handleRowsPerPageChange = (rows: number) => {
+    setRowsPerPage(rows);
+    setPage(1);
   };
 
   return (
@@ -88,7 +104,7 @@ export default function General() {
         <h1 className="text-2xl font-black tracking-tight text-title">Listado General</h1>
         <SearchBar
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearchChange}
           placeholder="Buscar por código o lote..."
         />
       </div>
@@ -123,15 +139,19 @@ export default function General() {
       ) : error ? (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">{error}</div>
       ) : (
-        <>
-          <DataTable
-            type="general"
-            data={data}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSortChange={handleSortChange}
-          />
-        </>
+        <DataTable
+          type="general"
+          data={data}
+          serverSide
+          total={total}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSortChange={handleSort}
+        />
       )}
     </div>
   );

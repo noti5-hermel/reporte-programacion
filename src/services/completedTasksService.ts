@@ -22,13 +22,17 @@ export interface PaginatedResponse {
   total_pages: number;
 }
 
+export type CompletedTasksSortDirection = "asc" | "desc";
+
 export const completedTasksService = {
   async getCompletedTasks(
     page: number = 1,
-    pageSize: number = 500,
+    pageSize: number = 50,
     startDate?: string,
     endDate?: string,
-    codigo?: string
+    codigo?: string,
+    sortBy?: string,
+    sortDirection?: CompletedTasksSortDirection
   ): Promise<PaginatedResponse> {
     const params = new URLSearchParams();
     params.set("page", String(page));
@@ -36,6 +40,10 @@ export const completedTasksService = {
     if (startDate) params.set("start_date", startDate);
     if (endDate) params.set("end_date", endDate);
     if (codigo) params.set("codigo", codigo);
+    if (sortBy) {
+      params.set("sort_by", sortBy);
+      params.set("sort_direction", sortDirection ?? "asc");
+    }
 
     const response = await fetchWithAuth(
       `${REPORTS_API_URL}/api/v1/reports/completed-tasks?${params}`
@@ -46,23 +54,5 @@ export const completedTasksService = {
     }
 
     return response.json();
-  },
-
-  async getAllCompletedTasks(
-    startDate?: string,
-    endDate?: string,
-    codigo?: string,
-    pageSize: number = 500
-  ): Promise<CompletedTaskItem[]> {
-    const firstPage = await this.getCompletedTasks(1, pageSize, startDate, endDate, codigo);
-    const all = [...firstPage.data];
-    const totalPages = firstPage.total_pages || 1;
-
-    for (let page = 2; page <= totalPages; page++) {
-      const nextPage = await this.getCompletedTasks(page, pageSize, startDate, endDate, codigo);
-      all.push(...nextPage.data);
-    }
-
-    return all;
   },
 };

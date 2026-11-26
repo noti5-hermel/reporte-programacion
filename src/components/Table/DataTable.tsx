@@ -17,6 +17,13 @@ interface DataTableProps {
   sortColumn?: string;
   sortDirection?: SortDirection;
   onSortChange?: (column: string, direction: SortDirection) => void;
+  // Modo servidor: el padre trae solo la página ordenada y reporta el total.
+  serverSide?: boolean;
+  total?: number;
+  page?: number;
+  rowsPerPage?: number;
+  onPageChange?: (page: number) => void;
+  onRowsPerPageChange?: (rows: number) => void;
 }
 
 const COLUMN_KEYS: Record<DataTableProps["type"], Record<string, string>> = {
@@ -103,15 +110,23 @@ const DataTable: React.FC<DataTableProps> = ({
   sortColumn: controlledSortColumn,
   sortDirection: controlledSortDirection,
   onSortChange,
+  serverSide = false,
+  total = 0,
+  page,
+  rowsPerPage,
+  onPageChange,
+  onRowsPerPageChange,
 }) => {
   const [internalSortColumn, setInternalSortColumn] = useState<string>("");
   const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>("asc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [internalRowsPerPage, setInternalRowsPerPage] = useState(20);
 
   const isControlled = typeof onSortChange === "function";
   const activeSortColumn = isControlled ? (controlledSortColumn ?? "") : internalSortColumn;
   const activeSortDirection = isControlled ? (controlledSortDirection ?? "asc") : internalSortDirection;
+  const activePage = serverSide ? (page ?? 1) : currentPage;
+  const activeRowsPerPage = serverSide ? (rowsPerPage ?? 20) : internalRowsPerPage;
   const columnKeys = COLUMN_KEYS[type];
 
   // 🔹 Definir columnas basadas en el tipo de tabla
@@ -146,8 +161,10 @@ const DataTable: React.FC<DataTableProps> = ({
   }, [type]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [data]);
+    // En modo servidor la página la controla el padre: no hay que resetearla
+    // al llegar nuevos datos (se reinicia al cambiar filtros u orden).
+    if (!serverSide) setCurrentPage(1);
+  }, [data, serverSide]);
 
   // 🔹 Función para manejar el ordenamiento
   const handleSort = (column: string) => {
@@ -162,24 +179,30 @@ const DataTable: React.FC<DataTableProps> = ({
       setInternalSortDirection(nextDirection);
     }
     // Siempre mostrar la primera fila del nuevo orden (ej. la fecha más antigua).
-    setCurrentPage(1);
+    if (serverSide && onPageChange) {
+      onPageChange(1);
+    } else {
+      setCurrentPage(1);
+    }
   };
 
-  // 🔹 Ordenar los datos
+  // 🔹 Ordenar los datos (en modo servidor ya llegan ordenados)
   const sortedData = useMemo(() => {
-    if (!activeSortColumn) return data;
+    if (!activeSortColumn || serverSide) return data;
     return [...data].sort((a, b) => {
       const result = compareValues(a[activeSortColumn], b[activeSortColumn], activeSortColumn);
       return activeSortDirection === "asc" ? result : -result;
     });
-  }, [data, activeSortColumn, activeSortDirection]);
+  }, [data, activeSortColumn, activeSortDirection, serverSide]);
 
   // 🔹 Paginación
-  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
-  const paginatedData = sortedData.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+  const totalPages = Math.ceil((serverSide ? total : sortedData.length) / activeRowsPerPage);
+  const paginatedData = serverSide
+    ? sortedData
+    : sortedData.slice(
+        (activePage - 1) * activeRowsPerPage,
+        activePage * activeRowsPerPage
+      );
 
   if (loading) {
     return <p className="text-center text-subtitle py-10">Cargando datos...</p>;
@@ -218,10 +241,15 @@ const DataTable: React.FC<DataTableProps> = ({
         <div className="flex items-center gap-2">
           <span>Filas por página:</span>
           <select
-            value={rowsPerPage}
+            value={activeRowsPerPage}
             onChange={(e) => {
-              setRowsPerPage(Number(e.target.value));
-              setCurrentPage(1);
+              const rows = Number(e.target.value);
+              if (serverSide) {
+                onRowsPerPageChange?.(rows);
+              } else {
+                setInternalRowsPerPage(rows);
+                setCurrentPage(1);
+              }
             }}
             className="border border-border-card bg-background-primary rounded-xl p-1.5 text-title font-bold"
           >
@@ -235,20 +263,26 @@ const DataTable: React.FC<DataTableProps> = ({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            disabled={currentPage === 1}
+            onClick={() => {
+              const next = Math.max(activePage - 1, 1);
+              if (serverSide) onPageChange?.(next);
+              else setCurrentPage(next);
+            }}
+            disabled={activePage === 1}
             className="px-3 py-1.5 border border-border-card bg-background-secondary rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-background-primary transition-colors"
           >
             ◀
           </button>
           <span className="font-bold">
-            Página {currentPage} de {totalPages || 1}
+            Página {activePage} de {totalPages || 1}
           </span>
           <button
-            onClick={() =>
-              setCurrentPage((p) => Math.min(p + 1, totalPages || 1))
-            }
-            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => {
+              const next = Math.min(activePage + 1, totalPages || 1);
+              if (serverSide) onPageChange?.(next);
+              else setCurrentPage(next);
+            }}
+            disabled={activePage === totalPages || totalPages === 0}
             className="px-3 py-1.5 border border-border-card bg-background-secondary rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-background-primary transition-colors"
           >
             ▶
