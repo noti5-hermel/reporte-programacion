@@ -230,7 +230,7 @@ async function downloadRendimientoExcel(
     teamHeaderRow.height = 24;
     ws.mergeCells(teamHeaderRow.number, 1, teamHeaderRow.number, headers.length);
     teamHeaderRow.eachCell((cell) => {
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD6EAF8" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE2EFDA" } };
       cell.font = { bold: true, size: 11, color: { argb: "FF1A5276" } };
       cell.alignment = { horizontal: "left", vertical: "middle" };
       cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
@@ -348,7 +348,7 @@ async function downloadRendimientoMensualExcel(
   statsCell.font = { bold: true, size: 10, color: { argb: "FF1A5276" } };
   statsCell.alignment = { horizontal: "left", vertical: "middle" };
   statsRow.eachCell((cell) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD6EAF8" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE2EFDA" } };
     cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
   });
   ws.mergeCells(2, 1, 2, headers.length);
