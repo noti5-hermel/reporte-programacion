@@ -66,15 +66,21 @@ export default function Rendimiento() {
     fetchData(selectedDate);
   }, [selectedDate, selectedMonth, selectedYear, viewMode, allowed]);
 
+  // El filtro del servidor espera un UUID (item.team); item.equipo es solo su nombre.
   const uniqueTeams = useMemo(() => {
-    const teams = new Set(detailData.map((item) => item.equipo));
-    return ["Todos", ...Array.from(teams)].sort();
+    const byId = new Map<string, string>();
+    for (const item of detailData) {
+      if (item.team) byId.set(item.team, item.equipo || item.team);
+    }
+    const options = Array.from(byId, ([id, name]) => ({ id, name }));
+    options.sort((a, b) => a.name.localeCompare(b.name));
+    return [{ id: "Todos", name: "Todos" }, ...options];
   }, [detailData]);
 
   const filteredData = useMemo(() => {
     let filtered = detailData;
     if (selectedTeam !== "Todos") {
-      filtered = filtered.filter((item) => item.equipo === selectedTeam);
+      filtered = filtered.filter((item) => item.team === selectedTeam);
     }
     if (searchQuery) {
       filtered = filtered.filter((item) =>
@@ -195,7 +201,7 @@ export default function Rendimiento() {
                   className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all min-w-[150px]"
                 >
                   {uniqueTeams.map(team => (
-                    <option key={team} value={team}>{team}</option>
+                    <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
               </div>
@@ -210,7 +216,12 @@ export default function Rendimiento() {
                 />
               </div>
               <button
-                onClick={() => rendimientoService.downloadExcel(detailData, stats, selectedDate, selectedTeam)}
+                onClick={() => rendimientoService.downloadExcel(
+                  detailData,
+                  stats,
+                  selectedDate,
+                  uniqueTeams.find((team) => team.id === selectedTeam)?.name ?? "Todos"
+                )}
                 disabled={loading || detailData.length === 0}
                 className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
               >
