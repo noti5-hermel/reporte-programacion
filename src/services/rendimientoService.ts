@@ -1,5 +1,11 @@
-import ExcelJS from "exceljs";
 import { REPORTS_API_URL, fetchWithAuth } from "../config/api";
+
+// ExcelJS solo se necesita al exportar: se carga bajo demanda para no incluirlo
+// en el bundle inicial.
+async function createWorkbook() {
+  const { default: ExcelJS } = await import("exceljs");
+  return new ExcelJS.Workbook();
+}
 
 export interface RendimientoStats {
   equipos: number;
@@ -181,7 +187,7 @@ async function downloadRendimientoExcel(
   date: string,
   teamFilter: string
 ) {
-  const workbook = new ExcelJS.Workbook();
+  const workbook = await createWorkbook();
   const ws = workbook.addWorksheet("Rendimiento");
 
   const headers = COLUMNS.map((c) => c.header);
@@ -312,7 +318,7 @@ async function downloadRendimientoMensualExcel(
   year: number,
   month: number
 ) {
-  const workbook = new ExcelJS.Workbook();
+  const workbook = await createWorkbook();
   const ws = workbook.addWorksheet("Rendimiento Mensual");
 
   const monthName = MONTHS_ES[month - 1];

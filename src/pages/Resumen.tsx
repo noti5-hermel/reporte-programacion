@@ -5,7 +5,6 @@ import { productivityService } from "../services/productivityService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
 import { useTableSort } from "../hooks/useTableSort";
 import { ShieldOff } from "lucide-react";
-import * as XLSX from "xlsx";
 
 export default function Resumen() {
   const allowed = useReportPermissions();
@@ -119,21 +118,27 @@ export default function Resumen() {
     setError("");
   };
 
-  const handleExport = () => {
-    const dataToExport = filteredData.map(item => ({
-      'Código': item.codigo,
-      'Descripción': item.descripcion,
-      'Tipo': item.tipo,
-      'Número de Personas': item.numeroPersonas,
-      'Total Tiempo Real': item.totalTiempoReal,
-      'Rendimiento Calculado': item.rendimiento_calculado,
-      'Rendimiento Sistema': item.rendimiento_sistema,
-    }));
+  const handleExport = async () => {
+    try {
+      // xlsx solo se carga cuando el usuario exporta.
+      const XLSX = await import("xlsx");
+      const dataToExport = filteredData.map(item => ({
+        'Código': item.codigo,
+        'Descripción': item.descripcion,
+        'Tipo': item.tipo,
+        'Número de Personas': item.numeroPersonas,
+        'Total Tiempo Real': item.totalTiempoReal,
+        'Rendimiento Calculado': item.rendimiento_calculado,
+        'Rendimiento Sistema': item.rendimiento_sistema,
+      }));
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Resumen");
-    XLSX.writeFile(workbook, "Resumen.xlsx");
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Resumen");
+      XLSX.writeFile(workbook, "Resumen.xlsx");
+    } catch {
+      setError("Error al generar el Excel");
+    }
   };
 
   return (
