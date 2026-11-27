@@ -8,6 +8,7 @@ import Rendimiento from "../pages/Rendimiento";
 
 import GestionPermisos from "../pages/GestionPermisos";
 import PrivateRoute from "./PrivateRoute";
+import AdminRoute from "./AdminRoute";
 import ReportIndex from "../pages/ReportIndex";
 
 const router = createBrowserRouter([
@@ -57,9 +58,9 @@ const router = createBrowserRouter([
       {
         path: "/permisos",
         element: (
-          <PrivateRoute>
+          <AdminRoute>
             <GestionPermisos />
-          </PrivateRoute>
+          </AdminRoute>
         ),
       },
       { path: "*", element: <Navigate to="/" replace /> },

@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Navigate } from "react-router-dom";
 import { Shield } from "lucide-react";
 import { permissionService, REPORT_OPTIONS } from "../services/permissionService";
 import type { UserItem } from "../services/permissionService";
 import { useAuth } from "../hooks/useAuth";
 
 export default function GestionPermisos() {
-  useAuth();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const [users, setUsers] = useState<UserItem[]>([]);
   const [userReports, setUserReports] = useState<Record<string, Set<string>>>({});
   const userReportsRef = useRef(userReports);
@@ -14,7 +16,7 @@ export default function GestionPermisos() {
   const [saving, setSaving] = useState<string | null>(null);
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const userList = await permissionService.getUsers();
@@ -37,11 +39,15 @@ export default function GestionPermisos() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (isAdmin) loadData();
+  }, [isAdmin, loadData]);
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   const toggleReport = (userId: string, report: string, checked: boolean) => {
     setUserReports((prev) => {
