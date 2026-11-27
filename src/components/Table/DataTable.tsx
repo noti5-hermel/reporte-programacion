@@ -4,14 +4,11 @@ import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { COLUMN_DESCRIPTIONS } from "./ColumnHelp";
 import type { SortDirection } from "../../hooks/useTableSort";
-
-interface DataItem {
-  [key: string]: any;
-}
+import type { TableRowData } from "./tableTypes";
 
 interface DataTableProps {
   type: "general" | "resumen" | "rendimiento" | "operators";
-  data?: DataItem[];
+  data?: TableRowData[];
   loading?: boolean;
   // Si el padre los pasa, el orden queda bajo su control y no se pierde al remontar.
   sortColumn?: string;

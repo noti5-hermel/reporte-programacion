@@ -8,10 +8,23 @@ import {
 } from "react";
 import { AUTH_API_URL, AUTH_FRONTEND_URL, AUTH_HEALTH_URL, REPORTS_API_URL } from "../../../config/api";
 import { clearReportPermissionsCache } from "../../../services/permissionCache";
+import type { User } from "../types/user";
+
+/** Normaliza el usuario que llega desde la URL, localStorage o la API. */
+function parseUser(value: unknown): User | null {
+  if (typeof value !== "object" || value === null) return null;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.username !== "string") return null;
+  return {
+    ...candidate,
+    username: candidate.username,
+    role: typeof candidate.role === "string" ? candidate.role : "",
+  };
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any;
+  user: User | null;
   hasRole: (roles: string[]) => boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
@@ -31,22 +44,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem('token');
   });
 
-  const [user, setUser] = useState<any>(() => {
+  const [user, setUser] = useState<User | null>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const userData = params.get('user');
       if (userData) {
-        const decodedUser = JSON.parse(decodeURIComponent(userData));
-        localStorage.setItem('user', JSON.stringify(decodedUser));
+        const decodedUser = parseUser(JSON.parse(decodeURIComponent(userData)));
+        if (decodedUser) localStorage.setItem('user', JSON.stringify(decodedUser));
         return decodedUser;
       }
       const storedUser = localStorage.getItem('user');
       const token = localStorage.getItem('token');
       if (storedUser && token) {
-        const parsedUser = JSON.parse(storedUser);
-        if (parsedUser && typeof parsedUser === 'object' && parsedUser.username) {
-          return parsedUser;
-        }
+        return parseUser(JSON.parse(storedUser));
       }
     } catch (err) {
       console.error('Error initializing auth state:', err);
@@ -71,9 +81,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (urlToken && userData) {
       isProcessingAuth.current = true;
       try {
-        const decodedUser = JSON.parse(decodeURIComponent(userData));
+        const decodedUser = parseUser(JSON.parse(decodeURIComponent(userData)));
         localStorage.setItem('token', urlToken);
-        localStorage.setItem('user', JSON.stringify(decodedUser));
+        if (decodedUser) localStorage.setItem('user', JSON.stringify(decodedUser));
         resetActivity();
         setToken(urlToken);
         setUser(decodedUser);
@@ -92,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (token) {
       const storedUser = localStorage.getItem("user");
       if (storedUser && !user) {
-        setUser(JSON.parse(storedUser));
+        setUser(parseUser(JSON.parse(storedUser)));
       }
       resetActivity();
     }
@@ -169,7 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedToken && storedUser) {
       try {
         setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        setUser(parseUser(JSON.parse(storedUser)));
       } catch (e) {
         console.error('Error restoring session from localStorage', e);
       }
@@ -221,7 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("user", JSON.stringify(data.user));
       resetActivity();
       setToken(data.access_token);
-      setUser(data.user);
+      setUser(parseUser(data.user));
     } else {
       throw new Error("Login failed");
     }

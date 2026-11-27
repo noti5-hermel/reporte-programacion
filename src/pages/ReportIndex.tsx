@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useReportPermissions } from "../hooks/useReportPermissions";
-import { ShieldOff } from "lucide-react";
+import NoAccess from "../components/NoAccess";
 
 const REPORT_ROUTES: { key: string; path: string }[] = [
   { key: "general", path: "/general" },
@@ -25,14 +25,9 @@ export default function ReportIndex() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center py-24 gap-5">
-      <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-card flex items-center justify-center">
-        <ShieldOff className="w-8 h-8 text-subtitle" />
-      </div>
-      <h2 className="text-xl font-bold text-title">Sin acceso a reportes</h2>
-      <p className="text-sm text-subtitle text-center max-w-md">
-        No tienes permisos para ver ningún reporte. Solicita al administrador que te brinde acceso a los reportes que necesitas.
-      </p>
-    </div>
+    <NoAccess
+      title="Sin acceso a reportes"
+      description="No tienes permisos para ver ningún reporte. Solicita al administrador que te brinde acceso a los reportes que necesitas."
+    />
   );
 }

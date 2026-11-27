@@ -1,7 +1,8 @@
 # Multi-stage build for React + Vite application
 
 # Stage 1: Build the application
-FROM node:20-alpine AS builder
+# Misma versión que .nvmrc y el entorno de desarrollo local.
+FROM node:22.15.1-alpine AS builder
 
 WORKDIR /app
 

@@ -1,9 +1,10 @@
 // src/components/Table/TableRow.tsx
 import React from "react";
+import type { TableRowData } from "./tableTypes";
 
 interface RowProps {
   type: "general" | "resumen" | "rendimiento" | "operators";
-  row: any;
+  row: TableRowData;
 }
 const TableRow: React.FC<RowProps> = ({ type, row }) => {
 
@@ -50,7 +51,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
 
   // --- Caso para la tabla de Operarios ---
   if (type === "operators") {
-    const completionRate = row.completion_rate || 0;
+    const completionRate = row.completion_rate ?? 0;
     const rateColor = completionRate >= 85 ? 'text-green-600' : completionRate >= 60 ? 'text-yellow-600' : 'text-red-600';
     const productivity = row.real_productivity;
 
@@ -78,7 +79,7 @@ const TableRow: React.FC<RowProps> = ({ type, row }) => {
   const rendColor = rend !== null && rend !== undefined
     ? (rend >= 85 ? 'text-green-600 font-bold' : rend >= 60 ? 'text-yellow-600 font-bold' : 'text-red-600 font-bold')
     : 'text-subtitle';
-  const formatTime = (val: string | null) => {
+  const formatTime = (val: string | null | undefined) => {
     if (!val) return "";
     if (val.includes("T")) return val.slice(11, 19);
     if (val.length >= 8) return val.slice(0, 8);

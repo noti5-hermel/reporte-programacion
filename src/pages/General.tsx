@@ -4,11 +4,12 @@ import { SearchBar } from "../components/SearchBar/SearchBar";
 import { completedTasksService } from "../services/completedTasksService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
 import { useTableSort, type SortDirection } from "../hooks/useTableSort";
-import { ShieldOff } from "lucide-react";
+import type { CompletedTaskItem } from "../services/completedTasksService";
+import NoAccess from "../components/NoAccess";
 
 export default function General() {
   const allowed = useReportPermissions();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<CompletedTaskItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,15 +64,7 @@ export default function General() {
 
   if (!allowed.has("general")) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-5">
-        <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-card flex items-center justify-center">
-          <ShieldOff className="w-8 h-8 text-subtitle" />
-        </div>
-        <h2 className="text-xl font-bold text-title">Sin acceso a este reporte</h2>
-        <p className="text-sm text-subtitle text-center max-w-md">
-          No tienes permisos para ver el reporte de la tabla general. Solicita al administrador que te brinde acceso.
-        </p>
-      </div>
+      <NoAccess description="No tienes permisos para ver el reporte de la tabla general. Solicita al administrador que te brinde acceso." />
     );
   }
 

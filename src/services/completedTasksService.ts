@@ -11,7 +11,9 @@ export interface CompletedTaskItem {
   cantidad: number | null;
   duracion: number | null;
   horas: number | null;
-  [key: string]: any;
+  tipo?: string;
+  rendimiento_calculado?: number | null;
+  [key: string]: unknown;
 }
 
 export interface PaginatedResponse {

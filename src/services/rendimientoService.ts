@@ -1,3 +1,4 @@
+import type { Row } from "exceljs";
 import { REPORTS_API_URL, fetchWithAuth } from "../config/api";
 
 // ExcelJS solo se necesita al exportar: se carga bajo demanda para no incluirlo
@@ -33,7 +34,7 @@ export interface RendimientoDetailItem {
   tiempo_real: number | null;
   comentarios: string | null;
   rendimiento: number | null;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface RendimientoResponse {
@@ -71,6 +72,21 @@ export interface RendimientoMensualResponse {
   teams: TeamMonthly[];
 }
 
+/** La API devuelve una fila por día/equipo; el servicio la agrupa por equipo. */
+interface RendimientoMensualRawRow {
+  team_id: string;
+  equipo: string;
+  date: string;
+  rendimiento: number | null;
+  tareas_totales: number;
+  tareas_completadas: number;
+}
+
+interface RendimientoMensualRawResponse {
+  stats: RendimientoMensualStats;
+  teams: RendimientoMensualRawRow[];
+}
+
 function formatShortDate(dateString: string) {
   if (!dateString) return "";
   const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -106,7 +122,14 @@ const COLUMNS = [
   { header: "T. Real", key: "tiempo_real", width: 11 },
   { header: "Rendimiento", key: "rendimiento", width: 13 },
   { header: "Comentarios", key: "comentarios", width: 28 },
-];
+] as const;
+
+type ColumnKey = (typeof COLUMNS)[number]["key"];
+
+/** Número de columna de Excel (1-based) derivado del nombre, nunca a mano. */
+const COLUMN_NUMBER = Object.fromEntries(
+  COLUMNS.map((column, index) => [column.key, index + 1])
+) as Record<ColumnKey, number>;
 
 interface TeamGroup {
   equipo: string;
@@ -146,37 +169,35 @@ function computeTeamStats(team: TeamGroup) {
 
 function rowDataFromItem(item: RendimientoDetailItem): (string | number)[] {
   return COLUMNS.map((col) => {
-    const val = item[col.key];
+    const val: unknown = item[col.key];
     if (col.key === "inicio_planificado" || col.key === "final_planificado" || col.key === "inicio_real" || col.key === "final_real") {
-      return formatTimeHHMM(val as string | null);
+      return formatTimeHHMM(val == null ? null : String(val));
     }
     if (col.key === "rendimiento" && val != null) {
       return `${Number(val).toFixed(2)}%`;
     }
-    if ((col.key === "tiempo_planificado" || col.key === "tiempo_real") && val != null) {
-      return Math.round(Number(val)).toString();
+    if (col.key === "tiempo_planificado" || col.key === "tiempo_real") {
+      return val == null ? "" : Math.round(Number(val)).toString();
     }
-    if ((col.key === "cantidad_planificada" || col.key === "cantidad_real") && (val === null || val === undefined)) {
-      return "";
-    }
-    if (val === null || val === undefined) return "";
-    return val;
+    if (val == null) return "";
+    return typeof val === "number" || typeof val === "string" ? val : String(val);
   });
 }
 
-function applyRowStyle(row: any, colNumber: number) {
-  if (colNumber === 14) {
-    const perfText = row.getCell(14).value ? row.getCell(14).value.toString() : "";
+function applyRowStyle(row: Row, colNumber: number) {
+  const rendimientoCol = COLUMN_NUMBER.rendimiento;
+  if (colNumber === rendimientoCol) {
+    const perfText = row.getCell(rendimientoCol).value?.toString() ?? "";
     const perfValue = parseFloat(perfText.replace("%", ""));
     if (!isNaN(perfValue)) {
       const isPoor = perfValue < 60;
-      row.getCell(14).font = { color: { argb: isPoor ? "FFFF0000" : "FF107C10" }, bold: true };
+      row.getCell(rendimientoCol).font = { color: { argb: isPoor ? "FFFF0000" : "FF107C10" }, bold: true };
     }
   }
-  if (colNumber === 6 || colNumber === 7) {
+  if (colNumber === COLUMN_NUMBER.cantidad_planificada || colNumber === COLUMN_NUMBER.cantidad_real) {
     row.getCell(colNumber).font = { color: { argb: "FF8B4513" }, bold: true };
   }
-  if (colNumber === 10 || colNumber === 13) {
+  if (colNumber === COLUMN_NUMBER.tiempo_planificado || colNumber === COLUMN_NUMBER.tiempo_real) {
     row.getCell(colNumber).font = { bold: true, color: { argb: "FF2E5984" } };
   }
 }
@@ -254,20 +275,22 @@ async function downloadRendimientoExcel(
     });
 
     // ── Fila de resumen del equipo ──
-    const teamSummaryData: (string | number)[] = [];
-    for (let c = 0; c < COLUMNS.length; c++) {
-      if (c === 9) teamSummaryData.push(Math.round(sumaPlan).toString());
-      else if (c === 12) teamSummaryData.push(Math.round(sumaReal).toString());
-      else if (c === 13) teamSummaryData.push(promedio !== null ? `${promedio.toFixed(2)}%` : "");
-      else teamSummaryData.push(c === 0 ? `Subtotal ${group.equipo}` : "");
-    }
+    const teamSummaryData = COLUMNS.map((col) => {
+      switch (col.key) {
+        case "tiempo_planificado": return Math.round(sumaPlan).toString();
+        case "tiempo_real": return Math.round(sumaReal).toString();
+        case "rendimiento": return promedio !== null ? `${promedio.toFixed(2)}%` : "";
+        case "equipo": return `Subtotal ${group.equipo}`;
+        default: return "";
+      }
+    });
     const teamSummaryRow = ws.addRow(teamSummaryData);
     teamSummaryRow.eachCell((cell, colNumber) => {
       cell.border = { top: { style: "medium" }, left: { style: "thin" }, bottom: { style: "medium" }, right: { style: "thin" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8F8F5" } };
       cell.alignment = { horizontal: "center", vertical: "middle" };
       cell.font = { bold: true, size: 10 };
-      if (colNumber === 14) cell.font = { bold: true, color: { argb: "FF1A5276" } };
+      if (colNumber === COLUMN_NUMBER.rendimiento) cell.font = { bold: true, color: { argb: "FF1A5276" } };
     });
   }
 
@@ -275,20 +298,22 @@ async function downloadRendimientoExcel(
   const avgRendGlobal = allRends.length > 0
     ? allRends.reduce((a, b) => a + b, 0) / allRends.length
     : 0;
-  const globalSummaryData: (string | number)[] = [];
-  for (let c = 0; c < COLUMNS.length; c++) {
-    if (c === 9) globalSummaryData.push(Math.round(totalPlanGlobal).toString());
-    else if (c === 12) globalSummaryData.push(Math.round(totalRealGlobal).toString());
-    else if (c === 13) globalSummaryData.push(`${avgRendGlobal.toFixed(2)}%`);
-    else globalSummaryData.push(c === 0 ? "TOTAL GENERAL:" : "");
-  }
+  const globalSummaryData = COLUMNS.map((col) => {
+    switch (col.key) {
+      case "tiempo_planificado": return Math.round(totalPlanGlobal).toString();
+      case "tiempo_real": return Math.round(totalRealGlobal).toString();
+      case "rendimiento": return `${avgRendGlobal.toFixed(2)}%`;
+      case "equipo": return "TOTAL GENERAL:";
+      default: return "";
+    }
+  });
   const globalSummaryRow = ws.addRow(globalSummaryData);
   globalSummaryRow.eachCell((cell, colNumber) => {
     cell.border = { top: { style: "medium" }, left: { style: "thin" }, bottom: { style: "medium" }, right: { style: "thin" } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF2CC" } };
     cell.alignment = { horizontal: "center", vertical: "middle" };
     cell.font = { bold: true, size: 11 };
-    if (colNumber === 14) cell.font = { bold: true, color: { argb: "FF2E5984" } };
+    if (colNumber === COLUMN_NUMBER.rendimiento) cell.font = { bold: true, color: { argb: "FF2E5984" } };
   });
 
   // Ancho de columnas
@@ -313,6 +338,33 @@ const MONTHS_ES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
+const MONTHLY_COLUMNS = [
+  { header: "Equipo", key: "equipo", width: 25 },
+  { header: "Días con datos", key: "dias_con_datos", width: 15 },
+  { header: "Tareas Totales", key: "tareas_totales", width: 15 },
+  { header: "Tareas Completadas", key: "tareas_completadas", width: 18 },
+  { header: "Rendimiento Prom.", key: "rendimiento_promedio", width: 18 },
+  { header: "Progreso", key: "progreso", width: 12 },
+] as const;
+
+const DAY_COLUMNS = [
+  { header: "  Fecha", key: "date", width: 20 },
+  { header: "  Tareas Totales", key: "tareas_totales", width: 18 },
+  { header: "  Tareas Comp.", key: "tareas_completadas", width: 16 },
+  { header: "  Rendimiento", key: "rendimiento", width: 18 },
+] as const;
+
+type MonthlyColumnKey = (typeof MONTHLY_COLUMNS)[number]["key"];
+type DayColumnKey = (typeof DAY_COLUMNS)[number]["key"];
+
+const MONTHLY_COLUMN_NUMBER = Object.fromEntries(
+  MONTHLY_COLUMNS.map((column, index) => [column.key, index + 1])
+) as Record<MonthlyColumnKey, number>;
+
+const DAY_COLUMN_NUMBER = Object.fromEntries(
+  DAY_COLUMNS.map((column, index) => [column.key, index + 1])
+) as Record<DayColumnKey, number>;
+
 async function downloadRendimientoMensualExcel(
   monthlyData: RendimientoMensualResponse,
   year: number,
@@ -324,14 +376,7 @@ async function downloadRendimientoMensualExcel(
   const monthName = MONTHS_ES[month - 1];
   const title = `Rendimiento Mensual - ${monthName} ${year}`;
 
-  const headers = [
-    { header: "Equipo", key: "equipo", width: 25 },
-    { header: "Días con datos", key: "dias_con_datos", width: 15 },
-    { header: "Tareas Totales", key: "tareas_totales", width: 15 },
-    { header: "Tareas Completadas", key: "tareas_completadas", width: 18 },
-    { header: "Rendimiento Prom.", key: "rendimiento_promedio", width: 18 },
-    { header: "Progreso", key: "progreso", width: 12 },
-  ];
+  const headers = MONTHLY_COLUMNS;
 
   // Title row
   const titleRow = ws.addRow([]);
@@ -375,37 +420,32 @@ async function downloadRendimientoMensualExcel(
       ? (team.rendimiento_promedio >= 85 ? "FF107C10" : team.rendimiento_promedio >= 60 ? "FFED7D31" : "FFFF0000")
       : "FF6B6B6B";
 
-    const rowData = [
-      team.equipo,
-      team.dias_con_datos,
-      team.tareas_totales,
-      team.tareas_completadas,
-      team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : "",
-      `${team.progreso}%`,
-    ];
+    const rowData = MONTHLY_COLUMNS.map((col) => {
+      switch (col.key) {
+        case "equipo": return team.equipo;
+        case "dias_con_datos": return team.dias_con_datos;
+        case "tareas_totales": return team.tareas_totales;
+        case "tareas_completadas": return team.tareas_completadas;
+        case "rendimiento_promedio": return team.rendimiento_promedio !== null ? `${team.rendimiento_promedio.toFixed(1)}%` : "";
+        case "progreso": return `${team.progreso}%`;
+      }
+    });
 
     const dataRow = ws.addRow(rowData);
     dataRow.eachCell((cell, colNumber) => {
       cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       cell.alignment = { horizontal: "center", vertical: "middle" };
-      if (colNumber === 5) {
+      if (colNumber === MONTHLY_COLUMN_NUMBER.rendimiento_promedio) {
         cell.font = { bold: true, color: { argb: rendColor } };
       }
-      if (colNumber === 6) {
+      if (colNumber === MONTHLY_COLUMN_NUMBER.progreso) {
         cell.font = { bold: true, color: { argb: "FF2E5984" } };
       }
     });
 
     // Detail days rows
     if (team.dias.length > 0) {
-      const dayHeaders = [
-        { header: "  Fecha", key: "date", width: 20 },
-        { header: "  Tareas Totales", key: "tareas_totales", width: 18 },
-        { header: "  Tareas Comp.", key: "tareas_completadas", width: 16 },
-        { header: "  Rendimiento", key: "rendimiento", width: 18 },
-      ];
-
-      const dayHeaderRow = ws.addRow(dayHeaders.map((c) => c.header));
+      const dayHeaderRow = ws.addRow(DAY_COLUMNS.map((c) => c.header));
       dayHeaderRow.height = 18;
       dayHeaderRow.font = { bold: true, size: 10, color: { argb: "FF4472C4" } };
       dayHeaderRow.eachCell((cell) => {
@@ -419,16 +459,19 @@ async function downloadRendimientoMensualExcel(
           ? (dia.rendimiento >= 85 ? "FF107C10" : dia.rendimiento >= 60 ? "FFED7D31" : "FFFF0000")
           : "FF6B6B6B";
 
-        const dayRow = ws.addRow([
-          formatShortDate(dia.date),
-          dia.tareas_totales,
-          dia.tareas_completadas,
-          dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : "",
-        ]);
+        const dayRowData = DAY_COLUMNS.map((col) => {
+          switch (col.key) {
+            case "date": return formatShortDate(dia.date);
+            case "tareas_totales": return dia.tareas_totales;
+            case "tareas_completadas": return dia.tareas_completadas;
+            case "rendimiento": return dia.rendimiento !== null ? `${dia.rendimiento.toFixed(2)}%` : "";
+          }
+        });
+        const dayRow = ws.addRow(dayRowData);
         dayRow.eachCell((cell, colNumber) => {
           cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
           cell.alignment = { horizontal: "center", vertical: "middle" };
-          if (colNumber === 4) {
+          if (colNumber === DAY_COLUMN_NUMBER.rendimiento) {
             cell.font = { bold: true, color: { argb: dRendColor } };
           }
         });
@@ -519,10 +562,10 @@ export const rendimientoService = {
     if (!response.ok) {
       throw new Error("Failed to fetch monthly rendimiento data");
     }
-    const raw = await response.json();
+    const raw: RendimientoMensualRawResponse = await response.json();
 
     const grouped: Record<string, TeamMonthly> = {};
-    for (const row of raw.teams as any[]) {
+    for (const row of raw.teams) {
       const key = row.team_id;
       if (!grouped[key]) {
         grouped[key] = {

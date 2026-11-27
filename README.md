@@ -6,8 +6,12 @@ Sistema de reportería desarrollado con React + TypeScript + Vite para visualiza
 
 ### Desarrollo Local
 
+Requiere Node 22.15.1 (ver `.nvmrc`). La única fuente de dependencias es
+`package-lock.json`, así que instala siempre con `npm ci`:
+
 ```bash
-npm install
+nvm use
+npm ci
 npm run dev
 ```
 

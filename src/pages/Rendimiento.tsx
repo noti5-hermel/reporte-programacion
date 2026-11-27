@@ -3,8 +3,9 @@ import { SearchBar } from "../components/SearchBar/SearchBar";
 import { rendimientoService } from "../services/rendimientoService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
 import type { RendimientoStats, RendimientoDetailItem, RendimientoMensualResponse } from "../services/rendimientoService";
-import { Calendar, Users, Activity, CheckCircle, FileDown, ChevronDown, ChevronRight, ShieldOff } from "lucide-react";
+import { Calendar, Users, Activity, CheckCircle, FileDown, ChevronDown, ChevronRight } from "lucide-react";
 import { ColumnHelp, COLUMN_DESCRIPTIONS } from "../components/Table/ColumnHelp";
+import NoAccess from "../components/NoAccess";
 
 type ViewMode = "tasks" | "monthly";
 
@@ -155,15 +156,7 @@ export default function Rendimiento() {
 
   if (!allowed.has("rendimiento")) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-5">
-        <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-card flex items-center justify-center">
-          <ShieldOff className="w-8 h-8 text-subtitle" />
-        </div>
-        <h2 className="text-xl font-bold text-title">Sin acceso a este reporte</h2>
-        <p className="text-sm text-subtitle text-center max-w-md">
-          No tienes permisos para ver el reporte de rendimiento. Solicita al administrador que te brinde acceso.
-        </p>
-      </div>
+      <NoAccess description="No tienes permisos para ver el reporte de rendimiento. Solicita al administrador que te brinde acceso." />
     );
   }
 
@@ -473,7 +466,7 @@ export default function Rendimiento() {
                         </tr>
                       </thead>
                       <tbody>
-                        {group.tasks.map((row: any, i: number) => {
+                        {group.tasks.map((row, i) => {
                           const formatTime = (val: string | null) => {
                             if (!val) return "";
                             if (val.includes("T")) return val.slice(11, 19);

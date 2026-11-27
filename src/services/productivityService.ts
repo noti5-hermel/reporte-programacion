@@ -11,7 +11,22 @@ export interface TaskPerformanceGroupItem {
   final_metric: number | null;
   rendimiento_calculado?: number | null;
   rendimiento_sistema?: number | null;
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+/** Filas ya transformadas que consume la tabla de Resumen. */
+export interface ResumenRow {
+  codigo: string;
+  descripcion: string;
+  tipo: string;
+  sumaTotalHoras: number | null;
+  sumCantidad: number | null;
+  promTiempoProducto: number | null;
+  numeroPersonas: number;
+  totalTiempoReal: number | null;
+  rendimiento_calculado?: number | null;
+  rendimiento_sistema?: number | null;
+  [key: string]: unknown;
 }
 
 export const productivityService = {
