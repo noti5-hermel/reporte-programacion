@@ -1,3 +1,5 @@
+import { clearReportPermissionsCache } from "../services/permissionCache";
+
 const normalizeUrl = (url: string) => {
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -23,6 +25,7 @@ async function handleUnauthorized() {
   localStorage.removeItem("user");
   localStorage.removeItem("last_activity");
   localStorage.removeItem("user_reports");
+  clearReportPermissionsCache();
 
   try {
     const controller = new AbortController();

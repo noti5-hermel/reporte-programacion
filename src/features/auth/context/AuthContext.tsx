@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { AUTH_API_URL, AUTH_FRONTEND_URL, AUTH_HEALTH_URL, REPORTS_API_URL } from "../../../config/api";
+import { clearReportPermissionsCache } from "../../../services/permissionCache";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -232,6 +233,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("last_activity");
     localStorage.removeItem("user_reports");
+    clearReportPermissionsCache();
     setToken(null);
     setUser(null);
     const envUrl = AUTH_FRONTEND_URL;

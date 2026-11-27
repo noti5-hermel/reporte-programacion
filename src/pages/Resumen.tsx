@@ -22,6 +22,8 @@ export default function Resumen() {
   useEffect(() => {
     if (allowed === null || !allowed.has("resumen")) return;
     const requestId = ++requestIdRef.current;
+    setLoading(true);
+    setError("");
     const fetchData = async () => {
       try {
         const result = await productivityService.getTaskPerformanceGroup(selectedYear, selectedMonth);
@@ -113,6 +115,8 @@ export default function Resumen() {
     setSelectedYear(null);
     setSelectedMonth(null);
     setShowDiff25(false);
+    setSearchQuery("");
+    setError("");
   };
 
   const handleExport = () => {
@@ -145,7 +149,13 @@ export default function Resumen() {
       </div>
       <div className="bg-background-secondary border border-border-card rounded-2xl p-4 sm:p-5 shadow-sm flex flex-wrap items-end gap-4">
         <div className="flex-grow max-w-xs">
-          <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={(query) => {
+              setError("");
+              setSearchQuery(query);
+            }}
+          />
         </div>
         <div className="flex flex-col">
           <label htmlFor="year-select" className="text-sm font-bold text-title mb-2">Año</label>
@@ -179,7 +189,10 @@ export default function Resumen() {
           <input
             type="checkbox"
             checked={showDiff25}
-            onChange={(e) => setShowDiff25(e.target.checked)}
+            onChange={(e) => {
+              setError("");
+              setShowDiff25(e.target.checked);
+            }}
             className="h-4 w-4 rounded border-border-card text-button-primary focus:ring-button-primary/20"
           />
           Diferencia ≥ 25% (calc. vs sistema)

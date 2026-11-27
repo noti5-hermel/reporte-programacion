@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { SearchBar } from "../components/SearchBar/SearchBar";
 import { rendimientoService } from "../services/rendimientoService";
 import { useReportPermissions } from "../hooks/useReportPermissions";
@@ -16,6 +16,16 @@ const MONTHS = [
 function parseISODate(dateStr: string): Date {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d);
+}
+
+function buildTeamOptions(items: RendimientoDetailItem[]) {
+  const byId = new Map<string, string>();
+  for (const item of items) {
+    if (item.team) byId.set(item.team, item.equipo || item.team);
+  }
+  const options = Array.from(byId, ([id, name]) => ({ id, name }));
+  options.sort((a, b) => a.name.localeCompare(b.name));
+  return [{ id: "Todos", name: "Todos" }, ...options];
 }
 
 export default function Rendimiento() {
@@ -36,61 +46,58 @@ export default function Rendimiento() {
   const [viewMode, setViewMode] = useState<ViewMode>("tasks");
 
   const today = new Date().toISOString().split("T")[0];
+  const requestIdRef = useRef(0);
+  // La lista de equipos se conserva entre cargas filtradas para que se pueda
+  // cambiar de equipo sin que el desplegable se quede con una sola opción.
+  const [teamOptions, setTeamOptions] = useState<{ id: string; name: string }[]>([
+    { id: "Todos", name: "Todos" },
+  ]);
 
-  const fetchData = async (date: string) => {
+  const fetchData = useCallback(async (date: string) => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
     try {
       if (viewMode === "monthly") {
         const result = await rendimientoService.getRendimientoMensual(selectedYear, selectedMonth);
+        if (requestId !== requestIdRef.current) return;
         setMonthlyData(result);
         setDetailData([]);
       } else {
+        // El servidor espera un UUID (item.team); item.equipo es solo su nombre.
         const teamParam = selectedTeam !== "Todos" ? selectedTeam : null;
         const result = await rendimientoService.getRendimiento(date || today, teamParam);
+        if (requestId !== requestIdRef.current) return;
         setStats(result.stats);
         setDetailData(result.detail);
         setMonthlyData(null);
+        if (teamParam === null) setTeamOptions(buildTeamOptions(result.detail));
       }
-    } catch (err) {
+    } catch {
+      if (requestId !== requestIdRef.current) return;
       setError("Error de conexión con el servidor");
       setDetailData([]);
       setMonthlyData(null);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
-  };
+  }, [selectedYear, selectedMonth, selectedTeam, today, viewMode]);
 
   useEffect(() => {
     if (allowed === null || !allowed.has("rendimiento")) return;
     fetchData(selectedDate);
-  }, [selectedDate, selectedMonth, selectedYear, viewMode, allowed]);
+  }, [allowed, fetchData, selectedDate]);
 
-  // El filtro del servidor espera un UUID (item.team); item.equipo es solo su nombre.
-  const uniqueTeams = useMemo(() => {
-    const byId = new Map<string, string>();
-    for (const item of detailData) {
-      if (item.team) byId.set(item.team, item.equipo || item.team);
-    }
-    const options = Array.from(byId, ([id, name]) => ({ id, name }));
-    options.sort((a, b) => a.name.localeCompare(b.name));
-    return [{ id: "Todos", name: "Todos" }, ...options];
-  }, [detailData]);
-
+  // El equipo ya se filtra en el servidor; aquí solo se aplica la búsqueda.
   const filteredData = useMemo(() => {
-    let filtered = detailData;
-    if (selectedTeam !== "Todos") {
-      filtered = filtered.filter((item) => item.team === selectedTeam);
-    }
-    if (searchQuery) {
-      filtered = filtered.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
-    return filtered;
-  }, [detailData, searchQuery, selectedTeam]);
+    if (!searchQuery) return detailData;
+    const query = searchQuery.toLowerCase();
+    return detailData.filter((item) =>
+      Object.values(item).some((value) =>
+        String(value).toLowerCase().includes(query)
+      )
+    );
+  }, [detailData, searchQuery]);
 
   const teamsGrouped = useMemo(() => {
     const groups: Record<string, { tasks: typeof filteredData; rendimientos: number[]; completadas: number; total: number }> = {};
@@ -170,7 +177,10 @@ export default function Rendimiento() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 bg-background-primary rounded-xl p-1 border border-border-card">
             <button
-              onClick={() => setViewMode("tasks")}
+              onClick={() => {
+                setViewMode("tasks");
+                setSelectedTeam("Todos");
+              }}
               className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "tasks"
                   ? "bg-button-primary text-white shadow-btn-glow"
@@ -200,7 +210,7 @@ export default function Rendimiento() {
                   onChange={(e) => setSelectedTeam(e.target.value)}
                   className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all min-w-[150px]"
                 >
-                  {uniqueTeams.map(team => (
+                  {teamOptions.map(team => (
                     <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
@@ -210,7 +220,10 @@ export default function Rendimiento() {
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setSelectedTeam("Todos");
+                  }}
                   max={today}
                   className="border border-border-card bg-background-primary rounded-xl px-3 py-2 text-sm font-bold text-title focus:ring-2 focus:ring-button-primary/20 focus:border-button-primary outline-none transition-all"
                 />
@@ -220,7 +233,7 @@ export default function Rendimiento() {
                   detailData,
                   stats,
                   selectedDate,
-                  uniqueTeams.find((team) => team.id === selectedTeam)?.name ?? "Todos"
+                  teamOptions.find((team) => team.id === selectedTeam)?.name ?? "Todos"
                 )}
                 disabled={loading || detailData.length === 0}
                 className="flex items-center gap-2 bg-button-primary hover:bg-button-primary-hover disabled:bg-background-primary disabled:text-subtitle text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-btn-glow hover:shadow-btn-glow-hover"
@@ -307,7 +320,13 @@ export default function Rendimiento() {
             {viewMode === "monthly" ? "Rendimiento Mensual por Equipo" : "Detalle de Ejecución"}
           </h2>
           {viewMode === "tasks" && (
-            <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+            <SearchBar
+              searchQuery={searchQuery}
+              onSearchChange={(query) => {
+                setError("");
+                setSearchQuery(query);
+              }}
+            />
           )}
         </div>
 
