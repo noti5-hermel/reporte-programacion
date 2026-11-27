@@ -78,7 +78,7 @@ copia a la imagen (está excluido en `.dockerignore`).
 
 ### Estructura de archivos Docker
 
-- **Dockerfile**: Construcción multi-etapa optimizada (Node 20 + Nginx)
+- **Dockerfile**: Construcción multi-etapa optimizada (Node 22.15.1 + Nginx)
 - **docker-compose.yml**: Configuración del servicio con redes y health checks
 - **nginx.conf**: Plantilla de Nginx (SPA + proxy `/api/` y `/auth-api/`)
 - **.dockerignore**: Excluye archivos innecesarios del contexto Docker
@@ -99,7 +99,15 @@ copia a la imagen (está excluido en `.dockerignore`).
   `docker-compose.yml` (se toman del entorno o del `.env` del host).
 - Los upstreams de nginx se leen en tiempo de **ejecución**:
   `REPORTS_API_UPSTREAM` (por defecto `http://reports-api:8107`) y
-  `AUTH_API_UPSTREAM` (por defecto `http://auth-api:8081`).
+  `AUTH_API_UPSTREAM` (por defecto `http://auth-api:8081`). Deben indicarse como
+  `scheme://host:puerto`, sin ruta; el prefijo `/api/` o `/auth-api/` se añade
+  automáticamente.
+- nginx resuelve esos nombres con el DNS embebido de Docker **en cada petición**,
+  no al arrancar. Si `auth-api` no está en `reporteria-network`, la SPA sigue
+  levantando y `/auth-api/*` responde 502 hasta que el servicio exista (en vez
+  de `host not found in upstream` + crash loop). Para que el login funcione,
+  el contenedor de auth debe estar en la misma red o hay que pasar su IP con
+  `AUTH_API_UPSTREAM`.
 
 ```bash
 # Ejemplo: apuntar a una API externa sin reconstruir la imagen
